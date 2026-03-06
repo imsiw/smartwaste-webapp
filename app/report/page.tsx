@@ -394,30 +394,37 @@ function primaryBtn(colors: { accent: string; accentText: string; border: string
 
 function outlineBtn(colors: { text: string; border: string }): React.CSSProperties {
   return {
-    padding: "10px 12px",
+    width: 148,
+    height: 42,
+    padding: "0 12px",
     borderRadius: 14,
     border: `1px solid ${colors.border}`,
     background: "rgba(255,255,255,0.03)",
     color: colors.text,
     fontWeight: 800,
     cursor: "pointer",
-    height: 42,
-    alignSelf: "center",
     whiteSpace: "nowrap",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
   };
 }
 
 function ghostBtn(colors: { text: string; border: string }): React.CSSProperties {
   return {
-    padding: "10px 12px",
+    width: 148,
+    height: 42,
+    padding: "0 12px",
     borderRadius: 14,
     border: `1px solid ${colors.border}`,
     background: "transparent",
     color: colors.text,
     fontWeight: 800,
     cursor: "pointer",
-    height: 42,
     whiteSpace: "nowrap",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
   };
 }
 
