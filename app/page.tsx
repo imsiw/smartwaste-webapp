@@ -167,8 +167,9 @@ export default function Home() {
                   maxWidth: 340,
                 }}
               >
-                <span style={{ fontSize: 18, lineHeight: 1 }}>🗑️</span>
-                <span>Отправить репорт</span>
+                <span style={btnIconSlot()}>🗑️</span>
+                <span style={btnTextSlot()}>Отправить репорт</span>
+                <span style={btnIconSlot()} aria-hidden />
               </Link>
 
               <Link
@@ -179,8 +180,9 @@ export default function Home() {
                   maxWidth: 340,
                 }}
               >
-                <span style={{ fontSize: 17, lineHeight: 1 }}>🔄</span>
-                <span>Статус задач</span>
+                <span style={btnIconSlot()}>🔄</span>
+                <span style={btnTextSlot()}>Статус задач</span>
+                <span style={btnIconSlot()} aria-hidden />
               </Link>
             </div>
 
@@ -258,10 +260,13 @@ function glass(cardBg: string, border: string): React.CSSProperties {
 
 function primaryBtn(bg: string, color: string): React.CSSProperties {
   return {
-    display: "inline-flex",
+    display: "grid",
+    gridTemplateColumns: "24px 1fr 24px",
     alignItems: "center",
-    padding: "10px 14px",
-    borderRadius: 14,
+    boxSizing: "border-box",
+    minHeight: 52,
+    padding: "0 18px",
+    borderRadius: 16,
     textDecoration: "none",
     background: bg,
     color,
@@ -273,16 +278,38 @@ function primaryBtn(bg: string, color: string): React.CSSProperties {
 
 function secondaryBtn(color: string, border: string): React.CSSProperties {
   return {
-    display: "inline-flex",
+    display: "grid",
+    gridTemplateColumns: "24px 1fr 24px",
     alignItems: "center",
-    padding: "10px 14px",
-    borderRadius: 14,
+    boxSizing: "border-box",
+    minHeight: 52,
+    padding: "0 18px",
+    borderRadius: 16,
     textDecoration: "none",
     background: "transparent",
     color,
     fontWeight: 800,
     border: `1px solid ${border}`,
     transition: "transform 120ms ease, opacity 120ms ease",
+  };
+}
+
+function btnIconSlot(): React.CSSProperties {
+  return {
+    width: 24,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 18,
+    lineHeight: 1,
+  };
+}
+
+function btnTextSlot(): React.CSSProperties {
+  return {
+    textAlign: "center",
+    fontSize: 15,
+    lineHeight: 1.1,
   };
 }
 
