@@ -3,9 +3,23 @@
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
 
+type TgUser = {
+  first_name?: string;
+  username?: string;
+};
+
+type TgTheme = {
+  bg_color?: string;
+  secondary_bg_color?: string;
+  text_color?: string;
+  hint_color?: string;
+  button_color?: string;
+  button_text_color?: string;
+};
+
 export default function HelpPage() {
-  const [theme, setTheme] = useState({});
-  const [user, setUser] = useState(null);
+  const [theme, setTheme] = useState<TgTheme>({});
+  const [user, setUser] = useState<TgUser | null>(null);
   const [isTg, setIsTg] = useState(false);
 
   useEffect(() => {
@@ -16,8 +30,8 @@ export default function HelpPage() {
     tg.ready();
     tg.expand();
 
-    setUser(tg.initDataUnsafe?.user ?? null);
-    setTheme(tg.themeParams ?? {});
+    setUser((tg.initDataUnsafe?.user ?? null) as TgUser | null);
+    setTheme((tg.themeParams ?? {}) as TgTheme);
   }, []);
 
   const name = useMemo(() => {

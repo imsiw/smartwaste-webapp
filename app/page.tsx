@@ -137,6 +137,7 @@ export default function Home() {
                 <StatCard
                   title="Источник"
                   value={isTg ? "Telegram" : "Web"}
+                  hint="Откуда открыт"
                   card={colors.card}
                   text={colors.text}
                   hintColor={colors.hint}
@@ -145,6 +146,7 @@ export default function Home() {
                 <StatCard
                   title="Режим"
                   value="MVP"
+                  hint="Текущая версия"
                   card={colors.card}
                   text={colors.text}
                   hintColor={colors.hint}
