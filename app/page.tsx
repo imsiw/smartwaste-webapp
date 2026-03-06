@@ -132,54 +132,14 @@ export default function Home() {
                   Совет: если фото не отправляется — сделайте его меньше.
                 </div>
               </div>
-
-              <div style={{ width: 140, flexShrink: 0, display: "grid", gap: 10 }}>
-                <StatCard
-                  title="Источник"
-                  value={isTg ? "Telegram" : "Web"}
-                  hint="Откуда открыт"
-                  card={colors.card}
-                  text={colors.text}
-                  hintColor={colors.hint}
-                  border={colors.border}
-                />
-                <StatCard
-                  title="Режим"
-                  value="MVP"
-                  hint="Текущая версия"
-                  card={colors.card}
-                  text={colors.text}
-                  hintColor={colors.hint}
-                  border={colors.border}
-                />
-              </div>
             </div>
           </div>
 
           {/* Actions */}
           <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
-            <ActionCard
-              href="/report"
-              icon="📸"
-              title="Сообщить о мусоре"
-              desc="Загрузи фото, добавь комментарий и (по желанию) геолокацию."
-              card={colors.card}
-              text={colors.text}
-              hint={colors.hint}
-              border={colors.border}
-            />
+
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <ActionCard
-                href="/tasks"
-                icon="✅"
-                title="Статус / задачи"
-                desc="Список задач, отметка “убрано”."
-                card={colors.card}
-                text={colors.text}
-                hint={colors.hint}
-                border={colors.border}
-              />
               <ActionCard
                 href="/help"
                 icon="ℹ️"
@@ -210,7 +170,7 @@ function looksGreen(hex: string) {
   if (h.length !== 6) return false;
   const r = parseInt(h.slice(0, 2), 16);
   const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 2 + 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
   return g > r + 25 && g > b + 25;
 }
 
