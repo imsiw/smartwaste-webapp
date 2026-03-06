@@ -91,66 +91,114 @@ export default function Home() {
               gap: 12,
             }}
           >
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <Logo accent={colors.accent} />
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Logo accent={colors.accent} />
+              <div>
                 <h1 style={{ margin: 0, fontSize: 22, letterSpacing: 0.2 }}>SmartWaste</h1>
-              </div>
-              <div style={{ marginTop: 6, color: colors.hint, fontSize: 13 }}>
-                {isTg ? "Открыто в Telegram WebApp" : "Открой через Telegram-бота для отправки репорта"}
+                <div style={{ marginTop: 4, color: colors.hint, fontSize: 12 }}>
+                  {isTg ? "Telegram WebApp" : "Открой через Telegram-бота"}
+                </div>
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
-              <Badge tone={isTg ? "ok" : "warn"} text={isTg ? "Connected" : "Browser"} />
-              <div style={{ color: colors.hint, fontSize: 12 }}>{user ? `Привет, ${name} 👋` : "Гость"}</div>
+            <Badge tone={isTg ? "ok" : "warn"} text={isTg ? "Connected" : "Browser"} />
+          </div>
+
+          {/* Main */}
+          <div
+            style={{
+              marginTop: 18,
+              ...glass(colors.card, colors.border),
+              padding: 20,
+              textAlign: "center",
+            }}
+          >
+            <div style={{ color: colors.hint, fontSize: 13, marginBottom: 8 }}>
+              {user ? `Привет, ${name} 👋` : "Добро пожаловать"}
+            </div>
+
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 900,
+                lineHeight: 1.2,
+                marginBottom: 10,
+              }}
+            >
+              Сообщите о мусоре в пару нажатий
+            </div>
+
+            <div
+              style={{
+                color: colors.hint,
+                fontSize: 14,
+                lineHeight: 1.5,
+                maxWidth: 460,
+                margin: "0 auto",
+              }}
+            >
+              Сделайте фото, отправьте репорт и отслеживайте статус задачи прямо в приложении.
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                marginTop: 18,
+                alignItems: "center",
+              }}
+            >
+              <Link
+                href="/report"
+                style={{
+                  ...primaryBtn(colors.accent, colors.accentText),
+                  width: "100%",
+                  maxWidth: 320,
+                  justifyContent: "center",
+                  fontSize: 15,
+                  padding: "12px 16px",
+                }}
+              >
+                🗑️ Отправить репорт
+              </Link>
+
+              <Link
+                href="/tasks"
+                style={{
+                  ...secondaryBtn(colors.text, colors.border),
+                  width: "100%",
+                  maxWidth: 320,
+                  justifyContent: "center",
+                  fontSize: 14,
+                }}
+              >
+                🔄 Статус задач
+              </Link>
+            </div>
+
+            <div
+              style={{
+                marginTop: 14,
+                color: colors.hint,
+                fontSize: 12,
+              }}
+            >
+              Если фото не отправляется — попробуйте уменьшить размер изображения.
             </div>
           </div>
 
-          {/* Hero */}
-          <div style={{ marginTop: 14, ...glass(colors.card, colors.border) }}>
-            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>
-                  Чистота начинается с одного репорта
-                </div>
-                <div style={{ color: colors.hint, fontSize: 13, lineHeight: 1.45 }}>
-                  Фото + гео → отправка в бота → задача уборки.
-                </div>
-
-                <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-                  <Link href="/report" style={primaryBtn(colors.accent, colors.accentText)}>
-                    <span style={{ marginRight: 8 }}>🗑️</span> Отправить репорт
-                  </Link>
-
-                  <Link href="/tasks" style={secondaryBtn(colors.text, colors.border)}>
-                    <span style={{ marginRight: 8 }}>🧹</span> Мои задачи
-                  </Link>
-                </div>
-
-                <div style={{ marginTop: 10, color: colors.hint, fontSize: 12 }}>
-                  Совет: если фото не отправляется — сделайте его меньше.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
-
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-              <ActionCard
-                href="/help"
-                icon="ℹ️"
-                title="Помощь"
-                desc="Короткая инструкция и ответы на частые проблемы."
-                card={colors.card}
-                text={colors.text}
-                hint={colors.hint}
-                border={colors.border}
-              />
-            </div>
+          {/* Bottom links */}
+          <div
+            style={{
+              marginTop: 12,
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <Link href="/help" style={subtleTextLink(colors.hint)}>
+              ℹ️ Помощь и инструкция
+            </Link>
           </div>
 
           {/* Footer */}
@@ -172,6 +220,23 @@ function looksGreen(hex: string) {
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
   return g > r + 25 && g > b + 25;
+}
+
+function subtleLink(color: string, border: string, card: string): React.CSSProperties {
+  return {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "8px 12px",
+    borderRadius: 12,
+    textDecoration: "none",
+    color,
+    fontSize: 13,
+    fontWeight: 600,
+    background: "rgba(255,255,255,0.03)",
+    border: `1px solid ${border}`,
+    opacity: 0.9,
+  };
 }
 
 function glass(cardBg: string, border: string): React.CSSProperties {
@@ -308,6 +373,16 @@ function StatCard({
       <div style={{ fontSize: 11, color: hintColor, marginTop: 2 }}>{hint}</div>
     </div>
   );
+}
+
+function subtleTextLink(color: string): React.CSSProperties {
+  return {
+    textDecoration: "none",
+    color,
+    fontSize: 13,
+    fontWeight: 600,
+    opacity: 0.9,
+  };
 }
 
 function Logo({ accent }: { accent: string }) {
