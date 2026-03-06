@@ -260,21 +260,14 @@ function primaryBtn(bg: string, color: string): React.CSSProperties {
   return {
     display: "inline-flex",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    boxSizing: "border-box",
-    minHeight: 52,
-    padding: "0 18px",
-    borderRadius: 16,
+    padding: "10px 14px",
+    borderRadius: 14,
     textDecoration: "none",
     background: bg,
     color,
-    fontWeight: 900,
-    fontSize: 16,
-    lineHeight: 1,
-    border: "1px solid rgba(255,255,255,0.14)",
-    boxShadow: "0 10px 24px rgba(34,197,94,0.22)",
-    transition: "transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease",
+    fontWeight: 800,
+    border: "1px solid rgba(255,255,255,0.12)",
+    transition: "transform 120ms ease, opacity 120ms ease",
   };
 }
 
@@ -282,21 +275,14 @@ function secondaryBtn(color: string, border: string): React.CSSProperties {
   return {
     display: "inline-flex",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    boxSizing: "border-box",
-    minHeight: 52,
-    padding: "0 18px",
-    borderRadius: 16,
+    padding: "10px 14px",
+    borderRadius: 14,
     textDecoration: "none",
-    background: "rgba(255,255,255,0.05)",
+    background: "transparent",
     color,
     fontWeight: 800,
-    fontSize: 15,
-    lineHeight: 1,
     border: `1px solid ${border}`,
-    boxShadow: "0 8px 20px rgba(0,0,0,0.18)",
-    transition: "transform 120ms ease, opacity 120ms ease, background 120ms ease",
+    transition: "transform 120ms ease, opacity 120ms ease",
   };
 }
 

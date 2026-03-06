@@ -262,40 +262,40 @@ export default function ReportPage() {
               />
             </div>
 
-            {/* Geo */}
-            <div style={{ marginTop: 14, display: "flex", justifyContent: "space-between", gap: 12 }}>
+
+            {/* Geo + actions */}
+            <div style={{ marginTop: 14 }}>
               <div>
                 <div style={{ fontWeight: 900 }}>Геолокация</div>
-                <div style={{ color: colors.hint, fontSize: 12, marginTop: 4 }}>Текущее: {geoLine}</div>
+                <div style={{ color: colors.hint, fontSize: 12, marginTop: 4 }}>
+                  Текущее: {geoLine}
+                </div>
               </div>
 
-              <button onClick={getGeo} style={outlineBtn(colors)}>
-                📍 Отправь гео
-              </button>
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
-              <button
-                onClick={sendToBot}
-                style={{ ...primaryBtn(colors), opacity: canSend ? 1 : 0.55 }}
-                disabled={!canSend}
-                title={!canSend ? "Нужно открыть в Telegram и добавить фото" : "Отправить"}
-              >
-                📨 Отправить
-              </button>
-
-              <button
-                onClick={() => {
-                  setPhotoDataUrl(null);
-                  setComment("");
-                  setGeo(null);
-                  setStatus("");
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gap: 10,
+                  marginTop: 12,
                 }}
-                style={ghostBtn(colors)}
               >
-                🧽 Очистить все
-              </button>
+                <button onClick={getGeo} style={outlineBtn(colors)}>
+                  📍 Отправить гео
+                </button>
+
+                <button
+                  onClick={() => {
+                    setPhotoDataUrl(null);
+                    setComment("");
+                    setGeo(null);
+                    setStatus("");
+                  }}
+                  style={ghostBtn(colors)}
+                >
+                  🧽 Очистить все
+                </button>
+              </div>
             </div>
 
             {/* Status */}
@@ -394,37 +394,47 @@ function primaryBtn(colors: { accent: string; accentText: string; border: string
 
 function outlineBtn(colors: { text: string; border: string }): React.CSSProperties {
   return {
-    width: 148,
-    height: 42,
-    padding: "0 12px",
+    width: "100%",
+    minWidth: 0,
+    height: 44,
+    padding: "0 14px",
+    boxSizing: "border-box",
     borderRadius: 14,
     border: `1px solid ${colors.border}`,
-    background: "rgba(255,255,255,0.03)",
+    background: "rgba(255,255,255,0.04)",
     color: colors.text,
     fontWeight: 800,
+    fontSize: 14,
     cursor: "pointer",
-    whiteSpace: "nowrap",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
+    textAlign: "center",
+    whiteSpace: "nowrap",
   };
 }
 
 function ghostBtn(colors: { text: string; border: string }): React.CSSProperties {
   return {
-    width: 148,
-    height: 42,
-    padding: "0 12px",
+    width: "100%",
+    minWidth: 0,
+    height: 44,
+    padding: "0 14px",
+    boxSizing: "border-box",
     borderRadius: 14,
     border: `1px solid ${colors.border}`,
-    background: "transparent",
+    background: "rgba(255,255,255,0.02)",
     color: colors.text,
     fontWeight: 800,
+    fontSize: 14,
     cursor: "pointer",
-    whiteSpace: "nowrap",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
+    gap: 8,
+    textAlign: "center",
+    whiteSpace: "nowrap",
   };
 }
 
