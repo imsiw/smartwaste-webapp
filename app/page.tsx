@@ -167,9 +167,7 @@ export default function Home() {
                   maxWidth: 340,
                 }}
               >
-                <span style={btnIconSlot()}>🗑️</span>
-                <span style={btnTextSlot()}>Отправить репорт</span>
-                <span style={btnIconSlot()} aria-hidden />
+                <span style={btnTextSlot()}>🗑️ Отправить репорт</span>
               </Link>
 
               <Link
@@ -180,9 +178,7 @@ export default function Home() {
                   maxWidth: 340,
                 }}
               >
-                <span style={btnIconSlot()}>🔄</span>
-                <span style={btnTextSlot()}>Статус задач</span>
-                <span style={btnIconSlot()} aria-hidden />
+                <span style={btnTextSlot()}>🔄 Статус задач</span>
               </Link>
             </div>
 
@@ -260,9 +256,9 @@ function glass(cardBg: string, border: string): React.CSSProperties {
 
 function primaryBtn(bg: string, color: string): React.CSSProperties {
   return {
-    display: "grid",
-    gridTemplateColumns: "24px 1fr 24px",
+    display: "inline-flex",
     alignItems: "center",
+    justifyContent: "center",
     boxSizing: "border-box",
     minHeight: 52,
     padding: "0 18px",
@@ -278,9 +274,9 @@ function primaryBtn(bg: string, color: string): React.CSSProperties {
 
 function secondaryBtn(color: string, border: string): React.CSSProperties {
   return {
-    display: "grid",
-    gridTemplateColumns: "24px 1fr 24px",
+    display: "inline-flex",
     alignItems: "center",
+    justifyContent: "center",
     boxSizing: "border-box",
     minHeight: 52,
     padding: "0 18px",
@@ -294,17 +290,6 @@ function secondaryBtn(color: string, border: string): React.CSSProperties {
   };
 }
 
-function btnIconSlot(): React.CSSProperties {
-  return {
-    width: 24,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 18,
-    lineHeight: 1,
-  };
-}
-
 function btnTextSlot(): React.CSSProperties {
   return {
     textAlign: "center",
@@ -312,6 +297,8 @@ function btnTextSlot(): React.CSSProperties {
     lineHeight: 1.1,
   };
 }
+
+
 
 function Badge({ tone, text }: { tone: "ok" | "warn"; text: string }) {
   const bg = tone === "ok" ? "rgba(34,197,94,0.18)" : "rgba(245,158,11,0.18)";
