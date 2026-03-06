@@ -168,8 +168,18 @@ export default function ReportPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Logo accent={colors.accent} />
               <div>
-                <h2 style={{ margin: 0 }}>Репорт</h2>
-                <div style={{ color: colors.hint, fontSize: 13 }}>Фото + комментарий + гео → отправка в бота</div>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: 22,
+                    fontWeight: 800,
+                    letterSpacing: 0.2,
+                    lineHeight: 1.1,
+                  }}
+                >
+                  Репорт
+                </h2>
+                <div style={{ color: colors.hint, fontSize: 13 }}>Спасибо, что делаете Якутск чище!</div>
               </div>
             </div>
 
@@ -260,7 +270,7 @@ export default function ReportPage() {
               </div>
 
               <button onClick={getGeo} style={outlineBtn(colors)}>
-                📍 Взять гео
+                📍 Отправь гео
               </button>
             </div>
 
@@ -272,7 +282,7 @@ export default function ReportPage() {
                 disabled={!canSend}
                 title={!canSend ? "Нужно открыть в Telegram и добавить фото" : "Отправить"}
               >
-                📨 Отправить в бот
+                📨 Отправить
               </button>
 
               <button
@@ -284,7 +294,7 @@ export default function ReportPage() {
                 }}
                 style={ghostBtn(colors)}
               >
-                🧽 Очистить
+                🧽 Очистить все
               </button>
             </div>
 
@@ -301,7 +311,7 @@ export default function ReportPage() {
                 lineHeight: 1.35,
               }}
             >
-              {status || "Добавь фото и нажми “Отправить в бот”."}
+              {status || "Добавьте фото и нажмите “Отправить”"}
             </div>
           </div>
 
@@ -417,6 +427,9 @@ function Logo({ accent }: { accent: string }) {
       style={{
         width: 34,
         height: 34,
+        minWidth: 34,
+        minHeight: 34,
+        flexShrink: 0,
         borderRadius: 12,
         background: `linear-gradient(135deg, ${accent}, rgba(255,255,255,0.15))`,
         display: "grid",
@@ -426,7 +439,7 @@ function Logo({ accent }: { accent: string }) {
       }}
       aria-hidden
     >
-      <span style={{ fontSize: 18 }}>♻️</span>
+      <span style={{ fontSize: 18, lineHeight: 1 }}>♻️</span>
     </div>
   );
 }
