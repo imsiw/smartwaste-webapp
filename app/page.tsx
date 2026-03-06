@@ -154,8 +154,8 @@ export default function Home() {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 10,
-                marginTop: 18,
+                gap: 12,
+                marginTop: 20,
                 alignItems: "center",
               }}
             >
@@ -164,13 +164,11 @@ export default function Home() {
                 style={{
                   ...primaryBtn(colors.accent, colors.accentText),
                   width: "100%",
-                  maxWidth: 320,
-                  justifyContent: "center",
-                  fontSize: 15,
-                  padding: "12px 16px",
+                  maxWidth: 340,
                 }}
               >
-                🗑️ Отправить репорт
+                <span style={{ fontSize: 18, lineHeight: 1 }}>🗑️</span>
+                <span>Отправить репорт</span>
               </Link>
 
               <Link
@@ -178,12 +176,11 @@ export default function Home() {
                 style={{
                   ...secondaryBtn(colors.text, colors.border),
                   width: "100%",
-                  maxWidth: 320,
-                  justifyContent: "center",
-                  fontSize: 14,
+                  maxWidth: 340,
                 }}
               >
-                🔄 Статус задач
+                <span style={{ fontSize: 17, lineHeight: 1 }}>🔄</span>
+                <span>Статус задач</span>
               </Link>
             </div>
 
@@ -263,14 +260,21 @@ function primaryBtn(bg: string, color: string): React.CSSProperties {
   return {
     display: "inline-flex",
     alignItems: "center",
-    padding: "10px 14px",
-    borderRadius: 14,
+    justifyContent: "center",
+    gap: 10,
+    boxSizing: "border-box",
+    minHeight: 52,
+    padding: "0 18px",
+    borderRadius: 16,
     textDecoration: "none",
     background: bg,
     color,
-    fontWeight: 800,
-    border: "1px solid rgba(255,255,255,0.12)",
-    transition: "transform 120ms ease, opacity 120ms ease",
+    fontWeight: 900,
+    fontSize: 16,
+    lineHeight: 1,
+    border: "1px solid rgba(255,255,255,0.14)",
+    boxShadow: "0 10px 24px rgba(34,197,94,0.22)",
+    transition: "transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease",
   };
 }
 
@@ -278,14 +282,21 @@ function secondaryBtn(color: string, border: string): React.CSSProperties {
   return {
     display: "inline-flex",
     alignItems: "center",
-    padding: "10px 14px",
-    borderRadius: 14,
+    justifyContent: "center",
+    gap: 10,
+    boxSizing: "border-box",
+    minHeight: 52,
+    padding: "0 18px",
+    borderRadius: 16,
     textDecoration: "none",
-    background: "transparent",
+    background: "rgba(255,255,255,0.05)",
     color,
     fontWeight: 800,
+    fontSize: 15,
+    lineHeight: 1,
     border: `1px solid ${border}`,
-    transition: "transform 120ms ease, opacity 120ms ease",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.18)",
+    transition: "transform 120ms ease, opacity 120ms ease, background 120ms ease",
   };
 }
 
