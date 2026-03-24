@@ -52,10 +52,17 @@ export default function ReportPage() {
     console.log("TG initData:", tg?.initData);
     console.log("TG initDataUnsafe:", tg?.initDataUnsafe);
     console.log("TG user:", tg?.initDataUnsafe?.user);
+    console.log("CURRENT URL:", window.location.href);
 
     if (!tg) {
       setIsTg(false);
-      setStatus("Открой страницу внутри Telegram (через бота).");
+      setStatus("Telegram WebApp не найден.");
+      return;
+    }
+
+    if (!tg.initData) {
+      setIsTg(true);
+      setStatus("Telegram initData пустой. Скорее всего открыт не тот домен WebApp.");
       return;
     }
 
@@ -241,7 +248,6 @@ function getGeo() {
 
   return (
     <>
-      <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       <div style={{ minHeight: "100vh", background: `radial-gradient(1200px 600px at 20% 10%, ${colors.glow}, transparent 55%), radial-gradient(900px 500px at 90% 20%, rgba(16,185,129,0.18), transparent 55%), ${colors.bg}`, color: colors.text, padding: 16 }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
