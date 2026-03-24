@@ -49,6 +49,7 @@ export default function ReportPage() {
 
   useEffect(() => {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
+
     const params = new URLSearchParams(window.location.search);
     const qId = params.get("tg_id");
     const qUsername = params.get("tg_username");
@@ -62,21 +63,10 @@ export default function ReportPage() {
 
     setDebugUrl(window.location.href);
     setDebugInitData(tg?.initData ? String(tg.initData).slice(0, 180) : "EMPTY");
-    console.log("TG object:", tg);
-    console.log("TG initData:", tg?.initData);
-    console.log("TG initDataUnsafe:", tg?.initDataUnsafe);
-    console.log("TG user:", tg?.initDataUnsafe?.user);
-    console.log("CURRENT URL:", window.location.href);
 
     if (!tg) {
       setIsTg(false);
-      setStatus("Telegram WebApp не найден.");
-      return;
-    }
-
-    if (!tg.initData) {
-      setIsTg(true);
-      setStatus("Telegram initData пустой. Скорее всего открыт не тот домен WebApp.");
+      setStatus("Открой страницу внутри Telegram (через бота).");
       return;
     }
 
@@ -89,16 +79,20 @@ export default function ReportPage() {
       tg.MainButton.setText("Отправить");
       tg.MainButton.show();
     } catch {}
+
+    setStatus("Можно отправлять репорт.");
   }, []);
 
   useEffect(() => {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
     if (!tg) return;
 
-    try {
-      const handler = () => submitReport();
-      tg.MainButton.onClick(handler);
+    const handler = () => {
+      void submitReport();
+    };
 
+    try {
+      tg.MainButton.onClick(handler);
       return () => {
         try {
           tg.MainButton.offClick(handler);
