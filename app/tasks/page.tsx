@@ -60,15 +60,29 @@ export default function TasksPage() {
 
   useEffect(() => {
     const tg: any = (window as any).Telegram?.WebApp;
-    if (!tg) return;
-    setIsTg(true);
-    tg.ready();
-    tg.expand();
-    setTheme(tg.themeParams ?? {});
-    loadData(tg.initData || "");
+
+    const params = new URLSearchParams(window.location.search);
+    const qId = params.get("tg_id");
+    const qUsername = params.get("tg_username");
+    const qFirstName = params.get("tg_first_name");
+    const qLastName = params.get("tg_last_name");
+
+    if (qId) localStorage.setItem("tg_id", qId);
+    if (qUsername) localStorage.setItem("tg_username", qUsername);
+    if (qFirstName) localStorage.setItem("tg_first_name", qFirstName);
+    if (qLastName) localStorage.setItem("tg_last_name", qLastName);
+
+    if (tg) {
+      setIsTg(true);
+      tg.ready();
+      tg.expand();
+      setTheme(tg.themeParams ?? {});
+    }
+
+    loadData();
   }, [showDone]);
 
-  async function loadData(initData: string) {
+  async function loadData() {
     setLoading(true);
     setStatusText("");
     try {
@@ -87,7 +101,7 @@ export default function TasksPage() {
         setPendingReports([]);
         setUsers([]);
       } else {
-        const tasksRes = await fetch(`/api/tasks?openOnly=${showDone ? "false" : "true"}`, { headers: { "x-telegram-init-data": initData } });
+        const tasksRes = await fetch(`/api/tasks?openOnly=${showDone ? "false" : "true"}`, { headers: getTelegramHeaders() });
         const tasksData = await safeJson(tasksRes);
         if (!tasksData.ok) throw new Error(tasksData.error || "Не удалось загрузить задачи");
         setTasks(tasksData.tasks || []);
@@ -113,10 +127,6 @@ export default function TasksPage() {
     }
   }
 
-  function getInitData() {
-    const tg: any = (window as any).Telegram?.WebApp;
-    return tg?.initData || "";
-  }
 
   async function taskAction(taskId: number, action: "start" | "reset" | "done") {
     const res = await fetch(`/api/tasks/${taskId}`, {
@@ -126,46 +136,46 @@ export default function TasksPage() {
     });
     const data = await safeJson(res);
     if (!data.ok) return setStatusText(data.error || "Не удалось обновить задачу");
-    loadData(getInitData());
+    loadData();
   }
 
   async function approveReport(id: number) {
-    const res = await fetch(`/api/admin/reports/${id}/approve`, { method: "POST", headers: { "x-telegram-init-data": getInitData() } });
+    const res = await fetch(`/api/admin/reports/${id}/approve`, { method: "POST", headers: getTelegramHeaders() });
     const data = await safeJson(res);
     if (!data.ok) return setStatusText(data.error || "Не удалось одобрить репорт");
-    loadData(getInitData());
+    loadData();
   }
 
   async function rejectReport(id: number) {
-    const res = await fetch(`/api/admin/reports/${id}/reject`, { method: "POST", headers: { "x-telegram-init-data": getInitData() } });
+    const res = await fetch(`/api/admin/reports/${id}/reject`, { method: "POST", headers: getTelegramHeaders() });
     const data = await safeJson(res);
     if (!data.ok) return setStatusText(data.error || "Не удалось отклонить репорт");
-    loadData(getInitData());
+    loadData();
   }
 
   async function deleteReport(id: number) {
-    const res = await fetch(`/api/admin/reports/${id}`, { method: "DELETE", headers: { "x-telegram-init-data": getInitData() } });
+    const res = await fetch(`/api/admin/reports/${id}`, { method: "DELETE", headers: getTelegramHeaders() });
     const data = await safeJson(res);
     if (!data.ok) return setStatusText(data.error || "Не удалось удалить репорт");
-    loadData(getInitData());
+    loadData();
   }
 
   async function deleteTask(id: number) {
-    const res = await fetch(`/api/admin/tasks/${id}`, { method: "DELETE", headers: { "x-telegram-init-data": getInitData() } });
+    const res = await fetch(`/api/admin/tasks/${id}`, { method: "DELETE", headers: getTelegramHeaders() });
     const data = await safeJson(res);
     if (!data.ok) return setStatusText(data.error || "Не удалось удалить задачу");
-    loadData(getInitData());
+    loadData();
   }
 
   async function changeRole(userId: number, nextRole: AppRole) {
     const res = await fetch(`/api/admin/users/${userId}/role`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-telegram-init-data": getInitData() },
+      headers: getTelegramHeaders(),
       body: JSON.stringify({ role: nextRole }),
     });
     const data = await safeJson(res);
     if (!data.ok) return setStatusText(data.error || "Не удалось поменять роль");
-    loadData(getInitData());
+    loadData();
   }
 
   if (!isTg) {
@@ -278,13 +288,37 @@ function dangerBtn(colors: any): React.CSSProperties {
 
 function getTelegramHeaders() {
   const tg = (window as any).Telegram?.WebApp;
-  const user = tg?.initDataUnsafe?.user;
+  const params = new URLSearchParams(window.location.search);
+
+  const tgId =
+    params.get("tg_id") ||
+    localStorage.getItem("tg_id") ||
+    String(tg?.initDataUnsafe?.user?.id || "");
+
+  const tgUsername =
+    params.get("tg_username") ||
+    localStorage.getItem("tg_username") ||
+    tg?.initDataUnsafe?.user?.username ||
+    "";
+
+  const tgFirstName =
+    params.get("tg_first_name") ||
+    localStorage.getItem("tg_first_name") ||
+    tg?.initDataUnsafe?.user?.first_name ||
+    "";
+
+  const tgLastName =
+    params.get("tg_last_name") ||
+    localStorage.getItem("tg_last_name") ||
+    tg?.initDataUnsafe?.user?.last_name ||
+    "";
 
   return {
     "Content-Type": "application/json",
-    "x-telegram-id": user?.id ? String(user.id) : "",
-    "x-telegram-username": user?.username || "",
-    "x-telegram-first-name": user?.first_name || "",
-    "x-telegram-last-name": user?.last_name || "",
+    "x-telegram-init-data": tg?.initData || "",
+    "x-telegram-id": String(tgId || ""),
+    "x-telegram-username": tgUsername,
+    "x-telegram-first-name": tgFirstName,
+    "x-telegram-last-name": tgLastName,
   };
 }
