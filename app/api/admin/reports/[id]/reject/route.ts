@@ -3,18 +3,29 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { Role, ReportStatus } from "@prisma/client";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    await requireRole(initData, [Role.ADMIN]);
+    await requireRole(req, [Role.ADMIN]);
+    const { id } = await context.params;
 
-    const report = await prisma.report.update({
-      where: { id: Number(params.id) },
-      data: { status: ReportStatus.REJECTED, rejectedAt: new Date() },
+    const reportId = Number(id);
+
+    const updatedReport = await prisma.report.update({
+      where: { id: reportId },
+      data: {
+        status: ReportStatus.REJECTED,
+        rejectedAt: new Date(),
+      },
     });
 
-    return NextResponse.json({ ok: true, report });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    return NextResponse.json({ ok: true, updatedReport });
+  } catch (e: any) {
+    return NextResponse.json(
+      { ok: false, error: e?.message || "Internal error" },
+      { status: 500 }
+    );
   }
 }

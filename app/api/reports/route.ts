@@ -5,8 +5,7 @@ import { saveBase64ImageToBlob } from "@/lib/blob";
 
 export async function POST(req: NextRequest) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    const user = await getOrCreateUserByTelegram(initData);
+    const user = await getOrCreateUserByTelegram(req);
     const body = await req.json();
 
     if (!body.photoDataUrl) {

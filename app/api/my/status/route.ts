@@ -4,8 +4,7 @@ import { prisma } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    const user = await getOrCreateUserByTelegram(initData);
+    const user = await getOrCreateUserByTelegram(req);
 
     const reports = await prisma.report.findMany({
       where: { createdByUserId: user.id },

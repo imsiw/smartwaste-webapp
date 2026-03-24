@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { prisma } from "./db";
 import { Role } from "@prisma/client";
+import { NextRequest } from "next/server";
 
 export type TelegramWebAppUser = {
   id: number | string;
@@ -50,22 +51,28 @@ export function verifyTelegramInitData(initData: string) {
   return user;
 }
 
-export async function getOrCreateUserByTelegram(initData: string) {
-  const tgUser = verifyTelegramInitData(initData);
-  const telegramId = String(tgUser.id);
+export async function getOrCreateUserByTelegram(req: NextRequest) {
+  const telegramId = req.headers.get("x-telegram-id");
+  const username = req.headers.get("x-telegram-username") || undefined;
+  const firstName = req.headers.get("x-telegram-first-name") || undefined;
+  const lastName = req.headers.get("x-telegram-last-name") || undefined;
+
+  if (!telegramId) {
+    throw new Error("No telegram id");
+  }
 
   const user = await prisma.user.upsert({
     where: { telegramId },
     update: {
-      username: tgUser.username || null,
-      firstName: tgUser.first_name || null,
-      lastName: tgUser.last_name || null,
+      username,
+      firstName,
+      lastName,
     },
     create: {
       telegramId,
-      username: tgUser.username || null,
-      firstName: tgUser.first_name || null,
-      lastName: tgUser.last_name || null,
+      username,
+      firstName,
+      lastName,
       role: Role.USER,
     },
   });
@@ -73,11 +80,13 @@ export async function getOrCreateUserByTelegram(initData: string) {
   return user;
 }
 
-export async function requireRole(initData: string, roles: Role[]) {
-  const user = await getOrCreateUserByTelegram(initData);
-  if (!roles.includes(user.role)) {
-    throw new Error("Недостаточно прав");
+export async function requireRole(req: NextRequest, allowed: Role[]) {
+  const user = await getOrCreateUserByTelegram(req);
+
+  if (!(allowed as Role[]).includes(user.role as Role)) {
+    throw new Error("Forbidden");
   }
+
   return user;
 }
 

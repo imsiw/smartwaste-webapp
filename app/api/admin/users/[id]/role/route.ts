@@ -3,23 +3,33 @@ import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Role } from "@prisma/client";
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    await requireRole(initData, [Role.ADMIN]);
+    await requireRole(req, [Role.ADMIN]);
+    const { id } = await context.params;
+
+    const userId = Number(id);
     const body = await req.json();
-    const nextRole = String(body.role || "").toUpperCase() as Role;
+
+    const nextRole = body?.role as Role;
+
     if (!Object.values(Role).includes(nextRole)) {
-      return NextResponse.json({ ok: false, error: "Некорректная роль" }, { status: 400 });
+      return NextResponse.json({ ok: false, error: "Invalid role" }, { status: 400 });
     }
 
     const user = await prisma.user.update({
-      where: { id: Number(params.id) },
+      where: { id: userId },
       data: { role: nextRole },
     });
 
     return NextResponse.json({ ok: true, user });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+  } catch (e: any) {
+    return NextResponse.json(
+      { ok: false, error: e?.message || "Internal error" },
+      { status: 500 }
+    );
   }
 }

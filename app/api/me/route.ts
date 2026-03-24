@@ -3,8 +3,7 @@ import { getOrCreateUserByTelegram, displayRole } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    const user = await getOrCreateUserByTelegram(initData);
+    const user = await getOrCreateUserByTelegram(req);
     return NextResponse.json({
       ok: true,
       user: {

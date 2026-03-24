@@ -3,45 +3,50 @@ import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { Role, ReportStatus, TaskStatus } from "@prisma/client";
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    const admin = await requireRole(initData, [Role.ADMIN]);
-    const reportId = Number(params.id);
+    await requireRole(req, [Role.ADMIN]);
+    const { id } = await context.params;
 
-    const report = await prisma.report.findUnique({ where: { id: reportId } });
-    if (!report) return NextResponse.json({ ok: false, error: "Репорт не найден" }, { status: 404 });
+    const reportId = Number(id);
 
-    const result = await prisma.$transaction(async (tx) => {
-      const updatedReport = await tx.report.update({
-        where: { id: reportId },
-        data: {
-          status: ReportStatus.APPROVED,
-          approvedByUserId: admin.id,
-          approvedAt: new Date(),
-        },
-      });
-
-      const task = await tx.task.upsert({
-        where: { reportId },
-        update: {},
-        create: {
-          reportId,
-          createdByUserId: report.createdByUserId,
-          comment: report.comment,
-          photoPath: report.photoPath,
-          lat: report.lat,
-          lon: report.lon,
-          acc: report.acc,
-          status: TaskStatus.NEW,
-        },
-      });
-
-      return { updatedReport, task };
+    const report = await prisma.report.findUnique({
+      where: { id: reportId },
     });
 
-    return NextResponse.json({ ok: true, ...result });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    if (!report) {
+      return NextResponse.json({ ok: false, error: "Report not found" }, { status: 404 });
+    }
+
+    const updatedReport = await prisma.report.update({
+      where: { id: reportId },
+      data: {
+        status: ReportStatus.APPROVED,
+        approvedAt: new Date(),
+      },
+    });
+
+    const task = await prisma.task.create({
+      data: {
+        reportId: report.id,
+        createdByUserId: report.createdByUserId,
+        comment: report.comment,
+        photoPath: report.photoPath,
+        lat: report.lat,
+        lon: report.lon,
+        acc: report.acc,
+        status: TaskStatus.NEW,
+      },
+    });
+
+    return NextResponse.json({ ok: true, updatedReport, task });
+  } catch (e: any) {
+    return NextResponse.json(
+      { ok: false, error: e?.message || "Internal error" },
+      { status: 500 }
+    );
   }
 }

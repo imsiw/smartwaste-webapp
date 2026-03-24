@@ -5,8 +5,7 @@ import { Role, TaskStatus } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    const user = await getOrCreateUserByTelegram(initData);
+    const user = await getOrCreateUserByTelegram(req);
 
     if (user.role === Role.USER) {
       const tasks = await prisma.task.findMany({

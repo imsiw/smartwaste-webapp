@@ -3,49 +3,55 @@ import { prisma } from "@/lib/db";
 import { getOrCreateUserByTelegram } from "@/lib/auth";
 import { Role, TaskStatus } from "@prisma/client";
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    const user = await getOrCreateUserByTelegram(initData);
+    const me = await getOrCreateUserByTelegram(req);
+    const { id } = await context.params;
 
-    if (![Role.CLEANER, Role.ADMIN].includes(user.role)) {
-      return NextResponse.json({ ok: false, error: "Недостаточно прав" }, { status: 403 });
+    if (!([Role.CLEANER, Role.ADMIN] as Role[]).includes(me.role as Role)) {
+      return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }
 
+    const taskId = Number(id);
     const body = await req.json();
-    const action = body.action as "start" | "reset" | "done";
-    const taskId = Number(params.id);
+    const action = body?.action;
 
-    if (Number.isNaN(taskId)) {
-      return NextResponse.json({ ok: false, error: "Некорректный id задачи" }, { status: 400 });
-    }
+    let data: any = {};
 
     if (action === "start") {
-      const task = await prisma.task.update({
-        where: { id: taskId },
-        data: { status: TaskStatus.IN_PROGRESS, assignedToUserId: user.id, doneAt: null, doneByUserId: null },
-      });
-      return NextResponse.json({ ok: true, task });
+      data = {
+        status: TaskStatus.IN_PROGRESS,
+        assignedToUserId: me.id,
+      };
+    } else if (action === "reset") {
+      data = {
+        status: TaskStatus.NEW,
+        assignedToUserId: null,
+        doneAt: null,
+      };
+    } else if (action === "done") {
+      data = {
+        status: TaskStatus.DONE,
+        doneAt: new Date(),
+        assignedToUserId: me.id,
+      };
+    } else {
+      return NextResponse.json({ ok: false, error: "Invalid action" }, { status: 400 });
     }
 
-    if (action === "reset") {
-      const task = await prisma.task.update({
-        where: { id: taskId },
-        data: { status: TaskStatus.NEW, assignedToUserId: null, doneAt: null, doneByUserId: null },
-      });
-      return NextResponse.json({ ok: true, task });
-    }
+    const task = await prisma.task.update({
+      where: { id: taskId },
+      data,
+    });
 
-    if (action === "done") {
-      const task = await prisma.task.update({
-        where: { id: taskId },
-        data: { status: TaskStatus.DONE, doneAt: new Date(), doneByUserId: user.id, assignedToUserId: user.id },
-      });
-      return NextResponse.json({ ok: true, task });
-    }
-
-    return NextResponse.json({ ok: false, error: "Неизвестное действие" }, { status: 400 });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    return NextResponse.json({ ok: true, task });
+  } catch (e: any) {
+    return NextResponse.json(
+      { ok: false, error: e?.message || "Internal error" },
+      { status: 500 }
+    );
   }
 }

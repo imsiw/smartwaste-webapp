@@ -5,8 +5,7 @@ import { Role, ReportStatus } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    await requireRole(initData, [Role.ADMIN]);
+    await requireRole(req, [Role.ADMIN]);
 
     const onlyPending = req.nextUrl.searchParams.get("pendingOnly") !== "false";
     const reports = await prisma.report.findMany({

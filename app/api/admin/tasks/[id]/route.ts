@@ -4,31 +4,37 @@ import { removeBlobByUrl } from "@/lib/blob";
 import { requireRole } from "@/lib/auth";
 import { Role } from "@prisma/client";
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    await requireRole(initData, [Role.ADMIN]);
+    await requireRole(req, [Role.ADMIN]);
+    const { id } = await context.params;
 
-    const taskId = Number(params.id);
+    const taskId = Number(id);
+
     const task = await prisma.task.findUnique({
       where: { id: taskId },
-      include: { report: true },
     });
 
     if (!task) {
-      return NextResponse.json({ ok: false, error: "Задача не найдена" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "Task not found" }, { status: 404 });
     }
 
-    if (task.report) {
-      await prisma.report.delete({ where: { id: task.report.id } });
-      await removeBlobByUrl(task.report.photoPath);
-    } else {
-      await prisma.task.delete({ where: { id: taskId } });
+    if (task.photoPath) {
       await removeBlobByUrl(task.photoPath);
     }
 
+    await prisma.task.delete({
+      where: { id: taskId },
+    });
+
     return NextResponse.json({ ok: true });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+  } catch (e: any) {
+    return NextResponse.json(
+      { ok: false, error: e?.message || "Internal error" },
+      { status: 500 }
+    );
   }
 }

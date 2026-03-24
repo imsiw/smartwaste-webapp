@@ -5,8 +5,7 @@ import { Role } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
-    const initData = req.headers.get("x-telegram-init-data") || "";
-    await requireRole(initData, [Role.ADMIN]);
+    await requireRole(req, [Role.ADMIN]);
     const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
     return NextResponse.json({ ok: true, users });
   } catch (error: any) {
