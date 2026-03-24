@@ -72,7 +72,7 @@ export default function TasksPage() {
     setLoading(true);
     setStatusText("");
     try {
-      const meRes = await fetch("/api/me", { headers: { "x-telegram-init-data": initData } });
+      const meRes = await fetch("/api/me", { headers: getTelegramHeaders() });
       const meData = await safeJson(meRes);
       if (!meData.ok) throw new Error(meData.error || "Не удалось загрузить профиль");
       const nextRole = meData.user.role as AppRole;
@@ -121,7 +121,7 @@ export default function TasksPage() {
   async function taskAction(taskId: number, action: "start" | "reset" | "done") {
     const res = await fetch(`/api/tasks/${taskId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-telegram-init-data": getInitData() },
+      headers: getTelegramHeaders(),
       body: JSON.stringify({ action }),
     });
     const data = await safeJson(res);
@@ -274,4 +274,17 @@ function smallBtn(colors: any): React.CSSProperties {
 
 function dangerBtn(colors: any): React.CSSProperties {
   return { ...smallBtn(colors), color: colors.danger };
+}
+
+function getTelegramHeaders() {
+  const tg = (window as any).Telegram?.WebApp;
+  const user = tg?.initDataUnsafe?.user;
+
+  return {
+    "Content-Type": "application/json",
+    "x-telegram-id": user?.id ? String(user.id) : "",
+    "x-telegram-username": user?.username || "",
+    "x-telegram-first-name": user?.first_name || "",
+    "x-telegram-last-name": user?.last_name || "",
+  };
 }

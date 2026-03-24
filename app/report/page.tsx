@@ -85,7 +85,7 @@ export default function ReportPage() {
     setPhotoDataUrl(dataUrl);
     setStatus("Фото загружено ✅");
   }
-  
+
 function getGeo() {
   const tg: Tg | undefined = (window as any).Telegram?.WebApp;
   if (!tg) {
@@ -188,10 +188,7 @@ function getGeo() {
     try {
       const res = await fetch("/api/reports", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-telegram-init-data": tg.initData || "",
-        },
+        headers: getTelegramHeaders(),
         body: JSON.stringify({
           comment,
           geo,
@@ -322,4 +319,17 @@ function readAsDataURL(file: File): Promise<string> {
     r.onerror = reject;
     r.readAsDataURL(file);
   });
+}
+
+function getTelegramHeaders() {
+  const tg = (window as any).Telegram?.WebApp;
+  const user = tg?.initDataUnsafe?.user;
+
+  return {
+    "Content-Type": "application/json",
+    "x-telegram-id": user?.id ? String(user.id) : "",
+    "x-telegram-username": user?.username || "",
+    "x-telegram-first-name": user?.first_name || "",
+    "x-telegram-last-name": user?.last_name || "",
+  };
 }

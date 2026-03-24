@@ -30,7 +30,7 @@ export default function Home() {
     } catch {}
 
     fetch("/api/me", {
-      headers: { "x-telegram-init-data": tg.initData || "" },
+      headers: getTelegramHeaders(),
     })
       .then((r) => r.json())
       .then((data) => {
@@ -252,4 +252,17 @@ function Logo({ accent }: { accent: string }) {
       <span style={{ fontSize: 18, lineHeight: 1 }}>♻️</span>
     </div>
   );
+}
+
+function getTelegramHeaders() {
+  const tg = (window as any).Telegram?.WebApp;
+  const user = tg?.initDataUnsafe?.user;
+
+  return {
+    "Content-Type": "application/json",
+    "x-telegram-id": user?.id ? String(user.id) : "",
+    "x-telegram-username": user?.username || "",
+    "x-telegram-first-name": user?.first_name || "",
+    "x-telegram-last-name": user?.last_name || "",
+  };
 }
