@@ -15,6 +15,7 @@ export default function ReportPage() {
   const [comment, setComment] = useState("");
   const [geo, setGeo] = useState<Geo | null>(null);
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const colors = useMemo(() => {
     const eco = {
@@ -29,29 +30,20 @@ export default function ReportPage() {
       danger: "#f87171",
     };
 
-    const tgBg = theme.bg_color;
-    const tgCard = theme.secondary_bg_color;
-    const tgText = theme.text_color;
-    const tgHint = theme.hint_color;
-    const tgAccent = theme.button_color;
-    const tgAccentText = theme.button_text_color;
-
-    const accent = tgAccent && looksGreen(tgAccent) ? tgAccent : eco.accent;
+    const accent = theme.button_color && looksGreen(theme.button_color) ? theme.button_color : eco.accent;
 
     return {
-      bg: tgBg ?? eco.bg,
-      card: tgCard ?? eco.card,
-      text: tgText ?? eco.text,
-      hint: tgHint ?? eco.hint,
+      bg: theme.bg_color ?? eco.bg,
+      card: theme.secondary_bg_color ?? eco.card,
+      text: theme.text_color ?? eco.text,
+      hint: theme.hint_color ?? eco.hint,
       accent,
-      accentText: tgAccentText ?? eco.accentText,
+      accentText: theme.button_text_color ?? eco.accentText,
       border: eco.border,
       glow: eco.glow,
       danger: eco.danger,
     };
   }, [theme]);
-
-  const canSend = useMemo(() => !!photoDataUrl && isTg, [photoDataUrl, isTg]);
 
   useEffect(() => {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
@@ -64,18 +56,13 @@ export default function ReportPage() {
     setIsTg(true);
     tg.ready();
     tg.expand();
-
     setTheme(tg.themeParams ?? {});
 
-    // Нижняя main-кнопка Telegram
     try {
       tg.MainButton.setText("Отправить");
       tg.MainButton.show();
-
-      // Важно: не передавать новую функцию каждый раз, иначе offClick не снимет
-      const handler = () => sendToBot();
+      const handler = () => submitReport();
       tg.MainButton.onClick(handler);
-
       return () => {
         try {
           tg.MainButton.offClick(handler);
@@ -83,22 +70,17 @@ export default function ReportPage() {
         } catch {}
       };
     } catch {
-      // если MainButton недоступна (редко), ок
       return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photoDataUrl, comment, geo, isTg]);
+  }, [photoDataUrl, comment, geo]);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
-
-    // Лимит тут условный (web_app_data тоже имеет лимиты) — лучше держать поменьше
     if (f.size > 3 * 1024 * 1024) {
       setStatus("Фото слишком большое (>3MB). Сделай меньше/сожми.");
       return;
     }
-
     const dataUrl = await readAsDataURL(f);
     setPhotoDataUrl(dataUrl);
     setStatus("Фото загружено ✅");
@@ -121,208 +103,111 @@ export default function ReportPage() {
     });
   }
 
-  function sendToBot() {
+  async function submitReport() {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
     if (!tg) return setStatus("Открой в Telegram.");
     if (!photoDataUrl) return setStatus("Добавь фото.");
+    if (loading) return;
 
-    const payload = {
-      type: "litter_report",
-      ts: Date.now(),
-      user: tg.initDataUnsafe?.user ?? null,
-      comment,
-      geo,
-      photo_data_url: photoDataUrl,
-    };
+    setLoading(true);
+    setStatus("Отправляем репорт…");
 
     try {
-      tg.sendData(JSON.stringify(payload));
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-telegram-init-data": tg.initData || "",
+        },
+        body: JSON.stringify({
+          comment,
+          geo,
+          photoDataUrl,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Не удалось отправить репорт");
       tg.HapticFeedback?.notificationOccurred("success");
-      setStatus("Отправлено в бот ✅");
-    } catch {
-      setStatus("Не удалось отправить. Возможно, фото слишком большое — нужно сжатие.");
+      setStatus("Репорт отправлен ✅ Теперь он ждёт одобрения админа.");
+      setPhotoDataUrl(null);
+      setComment("");
+      setGeo(null);
+    } catch (error: any) {
+      setStatus(error.message || "Ошибка отправки");
+    } finally {
+      setLoading(false);
     }
   }
 
-  const geoLine = geo
-    ? `${geo.lat.toFixed(5)}, ${geo.lon.toFixed(5)} (±${Math.round(geo.acc ?? 0)}м)`
-    : "не указано";
+  const geoLine = geo ? `${geo.lat.toFixed(5)}, ${geo.lon.toFixed(5)} (±${Math.round(geo.acc ?? 0)}м)` : "не указано";
 
   return (
     <>
       <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
-
-      <div
-        style={{
-          minHeight: "100vh",
-          background: `radial-gradient(1200px 600px at 20% 10%, ${colors.glow}, transparent 55%),
-                       radial-gradient(900px 500px at 90% 20%, rgba(16,185,129,0.18), transparent 55%),
-                       ${colors.bg}`,
-          color: colors.text,
-          padding: 16,
-        }}
-      >
+      <div style={{ minHeight: "100vh", background: `radial-gradient(1200px 600px at 20% 10%, ${colors.glow}, transparent 55%), radial-gradient(900px 500px at 90% 20%, rgba(16,185,129,0.18), transparent 55%), ${colors.bg}`, color: colors.text, padding: 16 }}>
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
-          {/* Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Logo accent={colors.accent} />
               <div>
-                <h2
-                  style={{
-                    margin: 0,
-                    fontSize: 22,
-                    fontWeight: 800,
-                    letterSpacing: 0.2,
-                    lineHeight: 1.1,
-                  }}
-                >
-                  Репорт
-                </h2>
+                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: 0.2, lineHeight: 1.1 }}>Репорт</h2>
                 <div style={{ color: colors.hint, fontSize: 13 }}>Спасибо, что делаете Якутск чище!</div>
               </div>
             </div>
 
-            <Link
-              href="/"
-              style={{
-                textDecoration: "none",
-                color: colors.text,
-                border: `1px solid ${colors.border}`,
-                padding: "8px 10px",
-                borderRadius: 12,
-                background: "rgba(255,255,255,0.04)",
-              }}
-            >
+            <Link href="/" style={{ textDecoration: "none", color: colors.text, border: `1px solid ${colors.border}`, padding: "8px 10px", borderRadius: 12, background: "rgba(255,255,255,0.04)" }}>
               ← Назад
             </Link>
           </div>
 
-          {/* Main card */}
           <div style={{ marginTop: 14, ...glass(colors.card, colors.border) }}>
-            {/* Photo */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
               <div style={{ fontWeight: 900 }}>Фото</div>
-              <div style={{ color: colors.hint, fontSize: 12 }}>
-                {photoDataUrl ? "добавлено ✅" : "обязательно"}
-              </div>
+              <div style={{ color: colors.hint, fontSize: 12 }}>{photoDataUrl ? "добавлено ✅" : "обязательно"}</div>
             </div>
 
             <div style={{ marginTop: 10 }}>
               <label style={uploadBox(colors.border)}>
                 <input type="file" accept="image/*" onChange={onFile} style={{ display: "none" }} />
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div
-                    style={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 14,
-                      display: "grid",
-                      placeItems: "center",
-                      background: "rgba(255,255,255,0.06)",
-                      border: "1px solid rgba(255,255,255,0.10)",
-                      fontSize: 20,
-                    }}
-                  >
-                    📷
-                  </div>
+                  <div style={{ width: 42, height: 42, borderRadius: 14, display: "grid", placeItems: "center", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)", fontSize: 20 }}>📷</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 800 }}>Выбрать фото</div>
-                    <div style={{ color: colors.hint, fontSize: 12 }}>
-                      Рекомендуемый размер файла менее 3MB
-                    </div>
+                    <div style={{ color: colors.hint, fontSize: 12 }}>Рекомендуемый размер файла менее 3MB</div>
                   </div>
                   <div style={{ color: colors.hint, fontSize: 18 }}>›</div>
                 </div>
               </label>
 
-              {photoDataUrl && (
-                <img
-                  src={photoDataUrl}
-                  alt="preview"
-                  style={{
-                    width: "100%",
-                    marginTop: 12,
-                    borderRadius: 16,
-                    border: `1px solid ${colors.border}`,
-                  }}
-                />
-              )}
+              {photoDataUrl && <img src={photoDataUrl} alt="preview" style={{ width: "100%", marginTop: 12, borderRadius: 16, border: `1px solid ${colors.border}` }} />}
             </div>
 
-            {/* Comment */}
             <div style={{ marginTop: 14, fontWeight: 900 }}>Комментарий</div>
             <div style={{ marginTop: 8 }}>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={3}
-                placeholder="Например: мусор рядом с урной, у входа..."
-                style={textarea(colors)}
-              />
+              <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder="Например: мусор рядом с урной, у входа..." style={textarea(colors)} />
             </div>
 
-
-            {/* Geo + actions */}
             <div style={{ marginTop: 14 }}>
               <div>
                 <div style={{ fontWeight: 900 }}>Геолокация</div>
-                <div style={{ color: colors.hint, fontSize: 12, marginTop: 4 }}>
-                  Текущее: {geoLine}
-                </div>
+                <div style={{ color: colors.hint, fontSize: 12, marginTop: 4 }}>Текущее: {geoLine}</div>
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                  gap: 10,
-                  marginTop: 12,
-                }}
-              >
-                <button onClick={getGeo} style={outlineBtn(colors)}>
-                  📍 Отправить гео
-                </button>
-
-                <button
-                  onClick={() => {
-                    setPhotoDataUrl(null);
-                    setComment("");
-                    setGeo(null);
-                    setStatus("");
-                  }}
-                  style={ghostBtn(colors)}
-                >
-                  🧽 Очистить все
-                </button>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, marginTop: 12 }}>
+                <button onClick={getGeo} style={outlineBtn(colors)}>📍 Отправить гео</button>
+                <button onClick={() => { setPhotoDataUrl(null); setComment(""); setGeo(null); setStatus(""); }} style={ghostBtn(colors)}>🧽 Очистить все</button>
               </div>
             </div>
 
-            {/* Status */}
-            <div
-              style={{
-                marginTop: 12,
-                padding: "10px 12px",
-                borderRadius: 14,
-                border: `1px solid ${colors.border}`,
-                background: "rgba(255,255,255,0.04)",
-                color: status.includes("не") || status.includes("слиш") ? colors.danger : colors.hint,
-                fontSize: 13,
-                lineHeight: 1.35,
-              }}
-            >
+            <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 14, border: `1px solid ${colors.border}`, background: "rgba(255,255,255,0.04)", color: status.includes("не") || status.includes("слиш") || status.includes("Ошибка") ? colors.danger : colors.hint, fontSize: 13, lineHeight: 1.35 }}>
               {status || "Добавьте фото и нажмите “Отправить”"}
             </div>
           </div>
-
-
         </div>
       </div>
     </>
   );
 }
-
-/* helpers */
 
 function looksGreen(hex: string) {
   const h = hex.replace("#", "");
@@ -334,131 +219,27 @@ function looksGreen(hex: string) {
 }
 
 function glass(cardBg: string, border: string): React.CSSProperties {
-  return {
-    background: cardBg,
-    borderRadius: 18,
-    padding: 14,
-    border: `1px solid ${border}`,
-    boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
-  };
+  return { background: cardBg, borderRadius: 18, padding: 14, border: `1px solid ${border}`, boxShadow: "0 10px 30px rgba(0,0,0,0.25)" };
 }
 
 function uploadBox(border: string): React.CSSProperties {
-  return {
-    display: "block",
-    padding: 12,
-    borderRadius: 16,
-    border: `1px dashed ${border}`,
-    background: "rgba(255,255,255,0.03)",
-    cursor: "pointer",
-    userSelect: "none",
-  };
+  return { display: "block", padding: 12, borderRadius: 16, border: `1px dashed ${border}`, background: "rgba(255,255,255,0.03)", cursor: "pointer", userSelect: "none" };
 }
 
-function textarea(colors: {
-  text: string;
-  border: string;
-}): React.CSSProperties {
-  return {
-    width: "100%",
-    boxSizing: "border-box",
-    padding: 12,
-    borderRadius: 16,
-    border: `1px solid ${colors.border}`,
-    background: "rgba(255,255,255,0.03)",
-    color: colors.text,
-    outline: "none",
-    lineHeight: 1.4,
-
-    resize: "none",        // ← главное
-    overflow: "auto",      // ← скролл внутри, если много текста
-    minHeight: 96,         // ← стабильная высота
-    maxHeight: 160,        // ← чтобы не раздувалось
-  };
-}
-
-
-function primaryBtn(colors: { accent: string; accentText: string; border: string }): React.CSSProperties {
-  return {
-    flex: 1,
-    minWidth: 200,
-    padding: "10px 14px",
-    borderRadius: 14,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: colors.accent,
-    color: colors.accentText,
-    fontWeight: 900,
-    cursor: "pointer",
-  };
+function textarea(colors: { text: string; border: string }): React.CSSProperties {
+  return { width: "100%", boxSizing: "border-box", padding: 12, borderRadius: 16, border: `1px solid ${colors.border}`, background: "rgba(255,255,255,0.03)", color: colors.text, outline: "none", lineHeight: 1.4, resize: "none", overflow: "auto", minHeight: 96, maxHeight: 160 };
 }
 
 function outlineBtn(colors: { text: string; border: string }): React.CSSProperties {
-  return {
-    width: "100%",
-    minWidth: 0,
-    height: 44,
-    padding: "0 14px",
-    boxSizing: "border-box",
-    borderRadius: 14,
-    border: `1px solid ${colors.border}`,
-    background: "rgba(255,255,255,0.04)",
-    color: colors.text,
-    fontWeight: 800,
-    fontSize: 14,
-    cursor: "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    textAlign: "center",
-    whiteSpace: "nowrap",
-  };
+  return { width: "100%", minWidth: 0, height: 44, padding: "0 14px", boxSizing: "border-box", borderRadius: 14, border: `1px solid ${colors.border}`, background: "rgba(255,255,255,0.04)", color: colors.text, fontWeight: 800, fontSize: 14, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, textAlign: "center", whiteSpace: "nowrap" };
 }
 
 function ghostBtn(colors: { text: string; border: string }): React.CSSProperties {
-  return {
-    width: "100%",
-    minWidth: 0,
-    height: 44,
-    padding: "0 14px",
-    boxSizing: "border-box",
-    borderRadius: 14,
-    border: `1px solid ${colors.border}`,
-    background: "rgba(255,255,255,0.02)",
-    color: colors.text,
-    fontWeight: 800,
-    fontSize: 14,
-    cursor: "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    textAlign: "center",
-    whiteSpace: "nowrap",
-  };
+  return { width: "100%", minWidth: 0, height: 44, padding: "0 14px", boxSizing: "border-box", borderRadius: 14, border: `1px solid ${colors.border}`, background: "rgba(255,255,255,0.02)", color: colors.text, fontWeight: 800, fontSize: 14, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, textAlign: "center", whiteSpace: "nowrap" };
 }
 
 function Logo({ accent }: { accent: string }) {
-  return (
-    <div
-      style={{
-        width: 34,
-        height: 34,
-        minWidth: 34,
-        minHeight: 34,
-        flexShrink: 0,
-        borderRadius: 12,
-        background: `linear-gradient(135deg, ${accent}, rgba(255,255,255,0.15))`,
-        display: "grid",
-        placeItems: "center",
-        border: "1px solid rgba(255,255,255,0.14)",
-        boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
-      }}
-      aria-hidden
-    >
-      <span style={{ fontSize: 18, lineHeight: 1 }}>♻️</span>
-    </div>
-  );
+  return <div style={{ width: 34, height: 34, minWidth: 34, minHeight: 34, flexShrink: 0, borderRadius: 12, background: `linear-gradient(135deg, ${accent}, rgba(255,255,255,0.15))`, display: "grid", placeItems: "center", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "0 10px 25px rgba(0,0,0,0.25)" }} aria-hidden><span style={{ fontSize: 18, lineHeight: 1 }}>♻️</span></div>;
 }
 
 function readAsDataURL(file: File): Promise<string> {

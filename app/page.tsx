@@ -6,11 +6,13 @@ import { useEffect, useMemo, useState } from "react";
 
 type TgUser = { id: number; username?: string; first_name?: string; last_name?: string };
 type TgTheme = Record<string, string | undefined>;
+type AppRole = "USER" | "CLEANER" | "ADMIN";
 
 export default function Home() {
   const [isTg, setIsTg] = useState(false);
   const [user, setUser] = useState<TgUser | null>(null);
   const [theme, setTheme] = useState<TgTheme>({});
+  const [roleLabel, setRoleLabel] = useState("User");
 
   useEffect(() => {
     const tg: any = (window as any).Telegram?.WebApp;
@@ -26,6 +28,15 @@ export default function Home() {
     try {
       tg.enableClosingConfirmation();
     } catch {}
+
+    fetch("/api/me", {
+      headers: { "x-telegram-init-data": tg.initData || "" },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.ok) setRoleLabel(data.user.roleLabel || mapRole(data.user.role));
+      })
+      .catch(() => setRoleLabel("User"));
   }, []);
 
   const name = useMemo(() => {
@@ -33,7 +44,6 @@ export default function Home() {
     return user.first_name || user.username || "друг";
   }, [user]);
 
-  // Эко/чистота палитра + мягкая подстройка под Telegram themeParams
   const colors = useMemo(() => {
     const eco = {
       bg: "#06130d",
@@ -46,22 +56,15 @@ export default function Home() {
       glow: "rgba(34, 197, 94, 0.22)",
     };
 
-    const tgBg = theme.bg_color;
-    const tgCard = theme.secondary_bg_color;
-    const tgText = theme.text_color;
-    const tgHint = theme.hint_color;
-    const tgAccent = theme.button_color;
-    const tgAccentText = theme.button_text_color;
-
-    const accent = tgAccent && looksGreen(tgAccent) ? tgAccent : eco.accent;
+    const accent = theme.button_color && looksGreen(theme.button_color) ? theme.button_color : eco.accent;
 
     return {
-      bg: tgBg ?? eco.bg,
-      card: tgCard ?? eco.card,
-      text: tgText ?? eco.text,
-      hint: tgHint ?? eco.hint,
+      bg: theme.bg_color ?? eco.bg,
+      card: theme.secondary_bg_color ?? eco.card,
+      text: theme.text_color ?? eco.text,
+      hint: theme.hint_color ?? eco.hint,
       accent,
-      accentText: tgAccentText ?? eco.accentText,
+      accentText: theme.button_text_color ?? eco.accentText,
       border: eco.border,
       glow: eco.glow,
     };
@@ -82,27 +85,11 @@ export default function Home() {
         }}
       >
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          {/* Header */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Logo accent={colors.accent} />
               <div>
-                <h1
-                  style={{
-                    margin: 0,
-                    fontSize: 22,
-                    fontWeight: 800,
-                    letterSpacing: 0.2,
-                    lineHeight: 1.1,
-                  }}
-                >
+                <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: 0.2, lineHeight: 1.1 }}>
                   SmartWaste
                 </h1>
                 <div style={{ marginTop: 4, color: colors.hint, fontSize: 12 }}>
@@ -111,10 +98,9 @@ export default function Home() {
               </div>
             </div>
 
-            <Badge tone={isTg ? "ok" : "warn"} text={isTg ? "Connected" : "Browser"} />
+            <Badge tone={isTg ? "ok" : "warn"} text={isTg ? roleLabel : "Browser"} />
           </div>
 
-          {/* Main */}
           <div
             style={{
               marginTop: 18,
@@ -127,86 +113,35 @@ export default function Home() {
               {user ? `Привет, ${name} 👋` : "Добро пожаловать"}
             </div>
 
-            <div
-              style={{
-                fontSize: 24,
-                fontWeight: 900,
-                lineHeight: 1.2,
-                marginBottom: 10,
-              }}
-            >
+            <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1.2, marginBottom: 10 }}>
               Сделайте город чище
             </div>
 
-            <div
-              style={{
-                color: colors.hint,
-                fontSize: 14,
-                lineHeight: 1.5,
-                maxWidth: 460,
-                margin: "0 auto",
-              }}
-            >
+            <div style={{ color: colors.hint, fontSize: 14, lineHeight: 1.5, maxWidth: 460, margin: "0 auto" }}>
               Сделайте фото, отправьте репорт и отслеживайте статус задачи прямо в приложении
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-                marginTop: 20,
-                alignItems: "center",
-              }}
-            >
-              <Link
-                href="/report"
-                style={{
-                  ...primaryBtn(colors.accent, colors.accentText),
-                  width: "100%",
-                  maxWidth: 340,
-                }}
-              >
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 20, alignItems: "center" }}>
+              <Link href="/report" style={{ ...primaryBtn(colors.accent, colors.accentText), width: "100%", maxWidth: 340 }}>
                 <span style={btnTextSlot()}>🗑️ Отправить репорт</span>
               </Link>
 
-              <Link
-                href="/tasks"
-                style={{
-                  ...secondaryBtn(colors.text, colors.border),
-                  width: "100%",
-                  maxWidth: 340,
-                }}
-              >
+              <Link href="/tasks" style={{ ...secondaryBtn(colors.text, colors.border), width: "100%", maxWidth: 340 }}>
                 <span style={btnTextSlot()}>🔄 Статус задач</span>
               </Link>
             </div>
 
-            <div
-              style={{
-                marginTop: 14,
-                color: colors.hint,
-                fontSize: 12,
-              }}
-            >
+            <div style={{ marginTop: 14, color: colors.hint, fontSize: 12 }}>
               Если фото не отправляется — попробуйте уменьшить размер изображения.
             </div>
           </div>
 
-          {/* Bottom links */}
-          <div
-            style={{
-              marginTop: 12,
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
             <Link href="/help" style={subtleTextLink(colors.hint)}>
               ℹ️ Помощь и инструкция
             </Link>
           </div>
 
-          {/* Footer */}
           <div style={{ marginTop: 16, color: colors.hint, fontSize: 12, textAlign: "center" }}>
             SmartWaste MVP · Next.js WebApp + Telegram Bot
           </div>
@@ -216,7 +151,11 @@ export default function Home() {
   );
 }
 
-/* helpers */
+function mapRole(role?: AppRole) {
+  if (role === "ADMIN") return "Admin";
+  if (role === "CLEANER") return "Cleaner";
+  return "User";
+}
 
 function looksGreen(hex: string) {
   const h = hex.replace("#", "");
@@ -225,23 +164,6 @@ function looksGreen(hex: string) {
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
   return g > r + 25 && g > b + 25;
-}
-
-function subtleLink(color: string, border: string, card: string): React.CSSProperties {
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "8px 12px",
-    borderRadius: 12,
-    textDecoration: "none",
-    color,
-    fontSize: 13,
-    fontWeight: 600,
-    background: "rgba(255,255,255,0.03)",
-    border: `1px solid ${border}`,
-    opacity: 0.9,
-  };
 }
 
 function glass(cardBg: string, border: string): React.CSSProperties {
@@ -291,119 +213,22 @@ function secondaryBtn(color: string, border: string): React.CSSProperties {
 }
 
 function btnTextSlot(): React.CSSProperties {
-  return {
-    textAlign: "center",
-    fontSize: 15,
-    lineHeight: 1.1,
-  };
+  return { textAlign: "center", fontSize: 15, lineHeight: 1.1 };
 }
-
-
 
 function Badge({ tone, text }: { tone: "ok" | "warn"; text: string }) {
   const bg = tone === "ok" ? "rgba(34,197,94,0.18)" : "rgba(245,158,11,0.18)";
   const br = tone === "ok" ? "rgba(34,197,94,0.35)" : "rgba(245,158,11,0.35)";
   const fg = tone === "ok" ? "#bbf7d0" : "#fef08a";
   return (
-    <span
-      style={{
-        padding: "4px 10px",
-        borderRadius: 999,
-        fontSize: 12,
-        background: bg,
-        border: `1px solid ${br}`,
-        color: fg,
-        fontWeight: 800,
-      }}
-    >
+    <span style={{ padding: "4px 10px", borderRadius: 999, fontSize: 12, background: bg, border: `1px solid ${br}`, color: fg, fontWeight: 800 }}>
       {text}
     </span>
   );
 }
 
-function ActionCard(props: {
-  href: string;
-  icon: string;
-  title: string;
-  desc: string;
-  card: string;
-  text: string;
-  hint: string;
-  border: string;
-}) {
-  const { href, icon, title, desc, card, text, hint, border } = props;
-
-  return (
-    <Link
-      href={href}
-      style={{
-        ...glass(card, border),
-        display: "flex",
-        gap: 12,
-        alignItems: "center",
-        textDecoration: "none",
-        color: text,
-      }}
-    >
-      <div
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: 14,
-          display: "grid",
-          placeItems: "center",
-          background: "rgba(255,255,255,0.06)",
-          border: "1px solid rgba(255,255,255,0.10)",
-          fontSize: 20,
-        }}
-      >
-        {icon}
-      </div>
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 900, marginBottom: 3 }}>{title}</div>
-        <div style={{ color: hint, fontSize: 13, lineHeight: 1.35 }}>{desc}</div>
-      </div>
-
-      <div style={{ color: hint, fontSize: 18 }}>›</div>
-    </Link>
-  );
-}
-
-function StatCard({
-  title,
-  value,
-  hint,
-  card,
-  text,
-  hintColor,
-  border,
-}: {
-  title: string;
-  value: string;
-  hint: string;
-  card: string;
-  text: string;
-  hintColor: string;
-  border: string;
-}) {
-  return (
-    <div style={{ ...glass(card, border), padding: 10 }}>
-      <div style={{ fontSize: 12, color: hintColor }}>{title}</div>
-      <div style={{ fontSize: 16, fontWeight: 950 as any, marginTop: 2 }}>{value}</div>
-      <div style={{ fontSize: 11, color: hintColor, marginTop: 2 }}>{hint}</div>
-    </div>
-  );
-}
-
 function subtleTextLink(color: string): React.CSSProperties {
-  return {
-    textDecoration: "none",
-    color,
-    fontSize: 13,
-    fontWeight: 600,
-    opacity: 0.9,
-  };
+  return { textDecoration: "none", color, fontSize: 13, fontWeight: 600, opacity: 0.9 };
 }
 
 function Logo({ accent }: { accent: string }) {
