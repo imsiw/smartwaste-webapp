@@ -5,6 +5,15 @@ import { saveBase64ImageToBlob } from "@/lib/blob";
 
 export async function POST(req: NextRequest) {
   try {
+    const debugHeaders = {
+    telegramId: req.headers.get("x-telegram-id"),
+    initData: req.headers.get("x-telegram-init-data"),
+    username: req.headers.get("x-telegram-username"),
+    firstName: req.headers.get("x-telegram-first-name"),
+    lastName: req.headers.get("x-telegram-last-name"),
+  };
+
+  console.log("REPORT DEBUG HEADERS:", debugHeaders);
     const user = await getOrCreateUserByTelegram(req);
     const body = await req.json();
 
@@ -26,7 +35,18 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ ok: true, report });
-  } catch (error: any) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+  } catch (e: any) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: e?.message || "Internal error",
+        debug: {
+          telegramId: req.headers.get("x-telegram-id"),
+          initData: req.headers.get("x-telegram-init-data"),
+          username: req.headers.get("x-telegram-username"),
+        },
+      },
+      { status: 500 }
+    );
   }
 }

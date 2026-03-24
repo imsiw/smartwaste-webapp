@@ -2,14 +2,14 @@ import { NextRequest } from "next/server";
 import { prisma } from "./db";
 import { Role } from "@prisma/client";
 
-type ParsedTelegramUser = {
+export type TelegramWebAppUser = {
   id: number | string;
   username?: string;
   first_name?: string;
   last_name?: string;
 };
 
-function parseTelegramUserFromInitData(initData: string): ParsedTelegramUser | null {
+function parseTelegramUserFromInitData(initData: string): TelegramWebAppUser | null {
   if (!initData) return null;
 
   try {
@@ -20,14 +20,14 @@ function parseTelegramUserFromInitData(initData: string): ParsedTelegramUser | n
     const user = JSON.parse(userRaw);
     if (!user?.id) return null;
 
-    return user as ParsedTelegramUser;
+    return user;
   } catch {
     return null;
   }
 }
 
 export async function getOrCreateUserByTelegram(req: NextRequest) {
-  let telegramId = req.headers.get("x-telegram-id");
+  let telegramId = req.headers.get("x-telegram-id") || "";
   let username = req.headers.get("x-telegram-username") || undefined;
   let firstName = req.headers.get("x-telegram-first-name") || undefined;
   let lastName = req.headers.get("x-telegram-last-name") || undefined;
@@ -36,7 +36,7 @@ export async function getOrCreateUserByTelegram(req: NextRequest) {
     const initData = req.headers.get("x-telegram-init-data") || "";
     const parsedUser = parseTelegramUserFromInitData(initData);
 
-    if (parsedUser) {
+    if (parsedUser?.id) {
       telegramId = String(parsedUser.id);
       username = parsedUser.username || username;
       firstName = parsedUser.first_name || firstName;
@@ -70,11 +70,7 @@ export async function getOrCreateUserByTelegram(req: NextRequest) {
 export async function requireRole(req: NextRequest, allowed: Role[]) {
   const user = await getOrCreateUserByTelegram(req);
 
-  if (user.role !== Role.ADMIN && allowed.includes(Role.ADMIN)) {
-    if (!allowed.includes(user.role as Role)) {
-      throw new Error("Forbidden");
-    }
-  } else if (!allowed.includes(user.role as Role)) {
+  if (!allowed.includes(user.role)) {
     throw new Error("Forbidden");
   }
 
