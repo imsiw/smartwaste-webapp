@@ -338,25 +338,6 @@ function getGeo() {
             <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 14, border: `1px solid ${colors.border}`, background: "rgba(255,255,255,0.04)", color: status.includes("не") || status.includes("слиш") || status.includes("Ошибка") ? colors.danger : colors.hint, fontSize: 13, lineHeight: 1.35 }}>
               {status || "Добавьте фото и нажмите “Отправить”"}
             </div>
-
-
-            <div
-              style={{
-                marginTop: 12,
-                padding: "10px 12px",
-                borderRadius: 14,
-                border: `1px solid ${colors.border}`,
-                background: "rgba(255,255,255,0.04)",
-                color: colors.hint,
-                fontSize: 12,
-                lineHeight: 1.35,
-                wordBreak: "break-all",
-              }}
-            >
-              <div><b>debug url:</b> {debugUrl}</div>
-              <div style={{ marginTop: 6 }}><b>debug initData:</b> {debugInitData}</div>
-            </div>
-
           </div>
         </div>
       </div>
