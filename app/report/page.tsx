@@ -245,7 +245,6 @@ function getGeo() {
       "x-telegram-last-name": tgLastName,
     };
   }
-  
   async function submitReport() {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
     if (!tg) return setStatus("Открой в Telegram.");
