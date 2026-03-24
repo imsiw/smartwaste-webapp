@@ -213,21 +213,39 @@ function getGeo() {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
     const params = new URLSearchParams(window.location.search);
 
-    const queryId = params.get("tg_id") || localStorage.getItem("tg_id") || "";
-    const queryUsername = params.get("tg_username") || localStorage.getItem("tg_username") || "";
-    const queryFirstName = params.get("tg_first_name") || localStorage.getItem("tg_first_name") || "";
-    const queryLastName = params.get("tg_last_name") || localStorage.getItem("tg_last_name") || "";
+    const tgId =
+      params.get("tg_id") ||
+      localStorage.getItem("tg_id") ||
+      String(tg?.initDataUnsafe?.user?.id || "");
+
+    const tgUsername =
+      params.get("tg_username") ||
+      localStorage.getItem("tg_username") ||
+      tg?.initDataUnsafe?.user?.username ||
+      "";
+
+    const tgFirstName =
+      params.get("tg_first_name") ||
+      localStorage.getItem("tg_first_name") ||
+      tg?.initDataUnsafe?.user?.first_name ||
+      "";
+
+    const tgLastName =
+      params.get("tg_last_name") ||
+      localStorage.getItem("tg_last_name") ||
+      tg?.initDataUnsafe?.user?.last_name ||
+      "";
 
     return {
       "Content-Type": "application/json",
       "x-telegram-init-data": tg?.initData || "",
-      "x-telegram-id": String(tg?.initDataUnsafe?.user?.id || queryId || ""),
-      "x-telegram-username": tg?.initDataUnsafe?.user?.username || queryUsername,
-      "x-telegram-first-name": tg?.initDataUnsafe?.user?.first_name || queryFirstName,
-      "x-telegram-last-name": tg?.initDataUnsafe?.user?.last_name || queryLastName,
+      "x-telegram-id": String(tgId || ""),
+      "x-telegram-username": tgUsername,
+      "x-telegram-first-name": tgFirstName,
+      "x-telegram-last-name": tgLastName,
     };
   }
-
+  
   async function submitReport() {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
     if (!tg) return setStatus("Открой в Telegram.");
