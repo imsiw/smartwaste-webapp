@@ -1,61 +1,48 @@
-import crypto from "crypto";
+import { NextRequest } from "next/server";
 import { prisma } from "./db";
 import { Role } from "@prisma/client";
-import { NextRequest } from "next/server";
 
-export type TelegramWebAppUser = {
+type ParsedTelegramUser = {
   id: number | string;
   username?: string;
   first_name?: string;
   last_name?: string;
 };
 
-function parseInitData(initData: string) {
-  const params = new URLSearchParams(initData);
-  const hash = params.get("hash");
-  if (!hash) throw new Error("Отсутствует hash в Telegram initData");
+function parseTelegramUserFromInitData(initData: string): ParsedTelegramUser | null {
+  if (!initData) return null;
 
-  const entries: string[] = [];
-  let user: TelegramWebAppUser | null = null;
+  try {
+    const params = new URLSearchParams(initData);
+    const userRaw = params.get("user");
+    if (!userRaw) return null;
 
-  for (const [key, value] of params.entries()) {
-    if (key === "hash") continue;
-    entries.push(`${key}=${value}`);
-    if (key === "user") user = JSON.parse(value);
+    const user = JSON.parse(userRaw);
+    if (!user?.id) return null;
+
+    return user as ParsedTelegramUser;
+  } catch {
+    return null;
   }
-
-  entries.sort();
-  return {
-    hash,
-    dataCheckString: entries.join("\n"),
-    user,
-    authDate: Number(params.get("auth_date") || 0),
-  };
-}
-
-export function verifyTelegramInitData(initData: string) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  if (!botToken) throw new Error("TELEGRAM_BOT_TOKEN не настроен");
-
-  const { hash, dataCheckString, user, authDate } = parseInitData(initData);
-
-  const secret = crypto.createHmac("sha256", "WebAppData").update(botToken).digest();
-  const computed = crypto.createHmac("sha256", secret).update(dataCheckString).digest("hex");
-
-  if (computed !== hash) throw new Error("Telegram initData не прошёл проверку");
-
-  const ageSeconds = Math.floor(Date.now() / 1000) - authDate;
-  if (ageSeconds > 60 * 60 * 24) throw new Error("Telegram initData устарел");
-  if (!user?.id) throw new Error("Пользователь Telegram не найден");
-
-  return user;
 }
 
 export async function getOrCreateUserByTelegram(req: NextRequest) {
-  const telegramId = req.headers.get("x-telegram-id");
-  const username = req.headers.get("x-telegram-username") || undefined;
-  const firstName = req.headers.get("x-telegram-first-name") || undefined;
-  const lastName = req.headers.get("x-telegram-last-name") || undefined;
+  let telegramId = req.headers.get("x-telegram-id");
+  let username = req.headers.get("x-telegram-username") || undefined;
+  let firstName = req.headers.get("x-telegram-first-name") || undefined;
+  let lastName = req.headers.get("x-telegram-last-name") || undefined;
+
+  if (!telegramId) {
+    const initData = req.headers.get("x-telegram-init-data") || "";
+    const parsedUser = parseTelegramUserFromInitData(initData);
+
+    if (parsedUser) {
+      telegramId = String(parsedUser.id);
+      username = parsedUser.username || username;
+      firstName = parsedUser.first_name || firstName;
+      lastName = parsedUser.last_name || lastName;
+    }
+  }
 
   if (!telegramId) {
     throw new Error("No telegram id");
@@ -83,15 +70,13 @@ export async function getOrCreateUserByTelegram(req: NextRequest) {
 export async function requireRole(req: NextRequest, allowed: Role[]) {
   const user = await getOrCreateUserByTelegram(req);
 
-  if (!(allowed as Role[]).includes(user.role as Role)) {
+  if (user.role !== Role.ADMIN && allowed.includes(Role.ADMIN)) {
+    if (!allowed.includes(user.role as Role)) {
+      throw new Error("Forbidden");
+    }
+  } else if (!allowed.includes(user.role as Role)) {
     throw new Error("Forbidden");
   }
 
   return user;
-}
-
-export function displayRole(role: Role) {
-  if (role === Role.ADMIN) return "Admin";
-  if (role === Role.CLEANER) return "Cleaner";
-  return "User";
 }

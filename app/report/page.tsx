@@ -227,15 +227,14 @@ function getGeo() {
 }
 
   async function submitReport() {
-    const tg: Tg | undefined = (window as any).Telegram?.WebApp;
-    if (!tg) return setStatus("Открой в Telegram.");
-    if (!photoDataUrl) return setStatus("Добавь фото.");
-    if (loading) return;
-
-    setLoading(true);
-    setStatus("Отправляем репорт…");
+    if (!photoDataUrl) {
+      setStatus("Добавьте фото");
+      return;
+    }
 
     try {
+      setStatus("Отправка...");
+
       const res = await fetch("/api/reports", {
         method: "POST",
         headers: getTelegramHeaders(),
@@ -245,17 +244,17 @@ function getGeo() {
           photoDataUrl,
         }),
       });
+
       const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "Не удалось отправить репорт");
-      tg.HapticFeedback?.notificationOccurred("success");
-      setStatus("Репорт отправлен ✅ Теперь он ждёт одобрения админа.");
-      setPhotoDataUrl(null);
-      setComment("");
-      setGeo(null);
-    } catch (error: any) {
-      setStatus(error.message || "Ошибка отправки");
-    } finally {
-      setLoading(false);
+
+      if (!res.ok || !data?.ok) {
+        setStatus(data?.error || "Не удалось отправить заявку.");
+        return;
+      }
+
+      setStatus("Заявка отправлена ✅");
+    } catch (e: any) {
+      setStatus(e?.message || "Ошибка отправки.");
     }
   }
 
@@ -382,13 +381,14 @@ function getTelegramUser() {
 }
 
 function getTelegramHeaders() {
-  const user = getTelegramUser();
+  const tg = (window as any).Telegram?.WebApp;
 
   return {
     "Content-Type": "application/json",
-    "x-telegram-id": user?.id ? String(user.id) : "",
-    "x-telegram-username": user?.username || "",
-    "x-telegram-first-name": user?.first_name || "",
-    "x-telegram-last-name": user?.last_name || "",
+    "x-telegram-init-data": tg?.initData || "",
+    "x-telegram-id": String(tg?.initDataUnsafe?.user?.id || ""),
+    "x-telegram-username": tg?.initDataUnsafe?.user?.username || "",
+    "x-telegram-first-name": tg?.initDataUnsafe?.user?.first_name || "",
+    "x-telegram-last-name": tg?.initDataUnsafe?.user?.last_name || "",
   };
 }
