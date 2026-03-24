@@ -79,7 +79,7 @@ export default function TasksPage() {
       setRole(nextRole);
 
       if (nextRole === "USER") {
-        const res = await fetch("/api/my/status", { headers: { "x-telegram-init-data": initData } });
+        const res = await fetch("/api/my/status", { headers: getTelegramHeaders() });
         const data = await safeJson(res);
         if (!data.ok) throw new Error(data.error || "Не удалось загрузить статусы");
         setReports(data.reports || []);
@@ -94,8 +94,8 @@ export default function TasksPage() {
 
         if (nextRole === "ADMIN") {
           const [reportsRes, usersRes] = await Promise.all([
-            fetch("/api/admin/reports?pendingOnly=true", { headers: { "x-telegram-init-data": initData } }),
-            fetch("/api/admin/users", { headers: { "x-telegram-init-data": initData } }),
+            fetch("/api/admin/reports?pendingOnly=true", { headers: getTelegramHeaders() }),
+            fetch("/api/admin/users", { headers: getTelegramHeaders() }),
           ]);
           const reportsData = await safeJson(reportsRes);
           const usersData = await safeJson(usersRes);
