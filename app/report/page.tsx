@@ -49,6 +49,17 @@ export default function ReportPage() {
 
   useEffect(() => {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
+    const params = new URLSearchParams(window.location.search);
+    const qId = params.get("tg_id");
+    const qUsername = params.get("tg_username");
+    const qFirstName = params.get("tg_first_name");
+    const qLastName = params.get("tg_last_name");
+
+    if (qId) localStorage.setItem("tg_id", qId);
+    if (qUsername) localStorage.setItem("tg_username", qUsername);
+    if (qFirstName) localStorage.setItem("tg_first_name", qFirstName);
+    if (qLastName) localStorage.setItem("tg_last_name", qLastName);
+
     setDebugUrl(window.location.href);
     setDebugInitData(tg?.initData ? String(tg.initData).slice(0, 180) : "EMPTY");
     console.log("TG object:", tg);
@@ -200,14 +211,20 @@ function getGeo() {
 
   function getTelegramHeaders() {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
+    const params = new URLSearchParams(window.location.search);
+
+    const queryId = params.get("tg_id") || localStorage.getItem("tg_id") || "";
+    const queryUsername = params.get("tg_username") || localStorage.getItem("tg_username") || "";
+    const queryFirstName = params.get("tg_first_name") || localStorage.getItem("tg_first_name") || "";
+    const queryLastName = params.get("tg_last_name") || localStorage.getItem("tg_last_name") || "";
 
     return {
       "Content-Type": "application/json",
       "x-telegram-init-data": tg?.initData || "",
-      "x-telegram-id": String(tg?.initDataUnsafe?.user?.id || ""),
-      "x-telegram-username": tg?.initDataUnsafe?.user?.username || "",
-      "x-telegram-first-name": tg?.initDataUnsafe?.user?.first_name || "",
-      "x-telegram-last-name": tg?.initDataUnsafe?.user?.last_name || "",
+      "x-telegram-id": String(tg?.initDataUnsafe?.user?.id || queryId || ""),
+      "x-telegram-username": tg?.initDataUnsafe?.user?.username || queryUsername,
+      "x-telegram-first-name": tg?.initDataUnsafe?.user?.first_name || queryFirstName,
+      "x-telegram-last-name": tg?.initDataUnsafe?.user?.last_name || queryLastName,
     };
   }
 
