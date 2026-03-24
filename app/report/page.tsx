@@ -85,44 +85,6 @@ export default function ReportPage() {
       };
     } catch {}
   }, [photoDataUrl, comment, geo]);
-
-  async function sendToBot() {
-    const tg: Tg | undefined = (window as any).Telegram?.WebApp;
-    if (!tg) return setStatus("Открой в Telegram.");
-    if (!photoDataUrl) return setStatus("Добавь фото.");
-
-    const user = tg.initDataUnsafe?.user;
-    if (!user?.id) {
-      setStatus("Не удалось получить Telegram-пользователя. Открой через бота.");
-      return;
-    }
-
-    try {
-      setStatus("Отправляем…");
-
-      const res = await fetch("/api/reports", {
-        method: "POST",
-        headers: getTelegramHeaders(),
-        body: JSON.stringify({
-          comment,
-          geo,
-          photoDataUrl,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data?.ok) {
-        setStatus(data?.error || "Не удалось отправить репорт.");
-        return;
-      }
-
-      tg.HapticFeedback?.notificationOccurred("success");
-      setStatus("Репорт отправлен ✅");
-    } catch (e: any) {
-      setStatus(e?.message || "Ошибка сети при отправке.");
-    }
-  }
   
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -226,14 +188,26 @@ function getGeo() {
   }
 }
 
+  function getTelegramHeaders() {
+    const tg: Tg | undefined = (window as any).Telegram?.WebApp;
+
+    return {
+      "Content-Type": "application/json",
+      "x-telegram-init-data": tg?.initData || "",
+      "x-telegram-id": String(tg?.initDataUnsafe?.user?.id || ""),
+      "x-telegram-username": tg?.initDataUnsafe?.user?.username || "",
+      "x-telegram-first-name": tg?.initDataUnsafe?.user?.first_name || "",
+      "x-telegram-last-name": tg?.initDataUnsafe?.user?.last_name || "",
+    };
+  }
+
   async function submitReport() {
-    if (!photoDataUrl) {
-      setStatus("Добавьте фото");
-      return;
-    }
+    const tg: Tg | undefined = (window as any).Telegram?.WebApp;
+    if (!tg) return setStatus("Открой в Telegram.");
+    if (!photoDataUrl) return setStatus("Добавь фото.");
 
     try {
-      setStatus("Отправка...");
+      setStatus("Отправляем…");
 
       const res = await fetch("/api/reports", {
         method: "POST",
@@ -248,13 +222,14 @@ function getGeo() {
       const data = await res.json();
 
       if (!res.ok || !data?.ok) {
-        setStatus(data?.error || "Не удалось отправить заявку.");
+        setStatus(data?.error || "Не удалось отправить репорт.");
         return;
       }
 
-      setStatus("Заявка отправлена ✅");
+      tg.HapticFeedback?.notificationOccurred("success");
+      setStatus("Репорт отправлен ✅");
     } catch (e: any) {
-      setStatus(e?.message || "Ошибка отправки.");
+      setStatus(e?.message || "Ошибка сети.");
     }
   }
 
@@ -380,15 +355,4 @@ function getTelegramUser() {
   return user;
 }
 
-function getTelegramHeaders() {
-  const tg = (window as any).Telegram?.WebApp;
 
-  return {
-    "Content-Type": "application/json",
-    "x-telegram-init-data": tg?.initData || "",
-    "x-telegram-id": String(tg?.initDataUnsafe?.user?.id || ""),
-    "x-telegram-username": tg?.initDataUnsafe?.user?.username || "",
-    "x-telegram-first-name": tg?.initDataUnsafe?.user?.first_name || "",
-    "x-telegram-last-name": tg?.initDataUnsafe?.user?.last_name || "",
-  };
-}
