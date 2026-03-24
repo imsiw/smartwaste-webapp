@@ -85,23 +85,96 @@ export default function ReportPage() {
     setPhotoDataUrl(dataUrl);
     setStatus("Фото загружено ✅");
   }
+  
+function getGeo() {
+  const tg: Tg | undefined = (window as any).Telegram?.WebApp;
+  if (!tg) {
+    setStatus("Гео работает только в Telegram.");
+    return;
+  }
 
-  function getGeo() {
-    const tg: Tg | undefined = (window as any).Telegram?.WebApp;
-    if (!tg) return setStatus("Гео работает только в Telegram.");
-
+  try {
     setStatus("Запрашиваем геолокацию…");
-    tg.LocationManager.getLocation((loc: any) => {
+
+    const lm = tg.LocationManager;
+
+    if (!lm) {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const g = {
+              lat: pos.coords.latitude,
+              lon: pos.coords.longitude,
+              acc: pos.coords.accuracy,
+            };
+            setGeo(g);
+            setStatus(`Гео: ${g.lat.toFixed(5)}, ${g.lon.toFixed(5)} (±${Math.round(g.acc ?? 0)}м)`);
+          },
+          () => {
+            setGeo(null);
+            setStatus("Гео не получено (нет прав/отказ).");
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+        return;
+      }
+
+      setStatus("Геолокация не поддерживается на этом устройстве.");
+      return;
+    }
+
+    if (typeof lm.init === "function") {
+      lm.init(() => {
+        lm.getLocation((loc: any) => {
+          if (!loc) {
+            setGeo(null);
+            setStatus("Гео не получено (нет прав/отказ).");
+            return;
+          }
+
+          const lat = Number(loc.latitude);
+          const lon = Number(loc.longitude);
+          const acc = Number(loc.horizontal_accuracy);
+
+          if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+            setGeo(null);
+            setStatus("Гео пришло в неверном формате.");
+            return;
+          }
+
+          const g = { lat, lon, acc: Number.isFinite(acc) ? acc : undefined };
+          setGeo(g);
+          setStatus(`Гео: ${g.lat.toFixed(5)}, ${g.lon.toFixed(5)} (±${Math.round(g.acc ?? 0)}м)`);
+        });
+      });
+      return;
+    }
+
+    lm.getLocation((loc: any) => {
       if (!loc) {
         setGeo(null);
         setStatus("Гео не получено (нет прав/отказ).");
         return;
       }
-      const g = { lat: loc.latitude, lon: loc.longitude, acc: loc.horizontal_accuracy };
+
+      const lat = Number(loc.latitude);
+      const lon = Number(loc.longitude);
+      const acc = Number(loc.horizontal_accuracy);
+
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        setGeo(null);
+        setStatus("Гео пришло в неверном формате.");
+        return;
+      }
+
+      const g = { lat, lon, acc: Number.isFinite(acc) ? acc : undefined };
       setGeo(g);
       setStatus(`Гео: ${g.lat.toFixed(5)}, ${g.lon.toFixed(5)} (±${Math.round(g.acc ?? 0)}м)`);
     });
+  } catch (e: any) {
+    setStatus(`Ошибка гео: ${e?.message || "неизвестная ошибка"}`);
   }
+}
 
   async function submitReport() {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
