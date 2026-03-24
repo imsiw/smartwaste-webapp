@@ -47,6 +47,12 @@ export default function ReportPage() {
 
   useEffect(() => {
     const tg: Tg | undefined = (window as any).Telegram?.WebApp;
+
+    console.log("TG object:", tg);
+    console.log("TG initData:", tg?.initData);
+    console.log("TG initDataUnsafe:", tg?.initDataUnsafe);
+    console.log("TG user:", tg?.initDataUnsafe?.user);
+
     if (!tg) {
       setIsTg(false);
       setStatus("Открой страницу внутри Telegram (через бота).");
@@ -61,17 +67,23 @@ export default function ReportPage() {
     try {
       tg.MainButton.setText("Отправить");
       tg.MainButton.show();
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const tg: Tg | undefined = (window as any).Telegram?.WebApp;
+    if (!tg) return;
+
+    try {
       const handler = () => submitReport();
       tg.MainButton.onClick(handler);
+
       return () => {
         try {
           tg.MainButton.offClick(handler);
-          tg.MainButton.hide();
         } catch {}
       };
-    } catch {
-      return;
-    }
+    } catch {}
   }, [photoDataUrl, comment, geo]);
 
   async function sendToBot() {
@@ -359,9 +371,18 @@ function readAsDataURL(file: File): Promise<string> {
   });
 }
 
-function getTelegramHeaders() {
+function getTelegramUser() {
   const tg = (window as any).Telegram?.WebApp;
   const user = tg?.initDataUnsafe?.user;
+
+  console.log("send user:", user);
+  console.log("send initData:", tg?.initData);
+
+  return user;
+}
+
+function getTelegramHeaders() {
+  const user = getTelegramUser();
 
   return {
     "Content-Type": "application/json",
