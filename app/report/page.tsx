@@ -74,6 +74,44 @@ export default function ReportPage() {
     }
   }, [photoDataUrl, comment, geo]);
 
+  async function sendToBot() {
+    const tg: Tg | undefined = (window as any).Telegram?.WebApp;
+    if (!tg) return setStatus("Открой в Telegram.");
+    if (!photoDataUrl) return setStatus("Добавь фото.");
+
+    const user = tg.initDataUnsafe?.user;
+    if (!user?.id) {
+      setStatus("Не удалось получить Telegram-пользователя. Открой через бота.");
+      return;
+    }
+
+    try {
+      setStatus("Отправляем…");
+
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: getTelegramHeaders(),
+        body: JSON.stringify({
+          comment,
+          geo,
+          photoDataUrl,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data?.ok) {
+        setStatus(data?.error || "Не удалось отправить репорт.");
+        return;
+      }
+
+      tg.HapticFeedback?.notificationOccurred("success");
+      setStatus("Репорт отправлен ✅");
+    } catch (e: any) {
+      setStatus(e?.message || "Ошибка сети при отправке.");
+    }
+  }
+  
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
