@@ -60,7 +60,11 @@ export default function TasksPage() {
 
   useEffect(() => {
     const tg: any = (window as any).Telegram?.WebApp;
-
+    try {
+      tg.ready();
+      tg.expand();
+      tg.MainButton.hide();
+    } catch {}
     const params = new URLSearchParams(window.location.search);
     const qId = params.get("tg_id");
     const qUsername = params.get("tg_username");

@@ -31,7 +31,11 @@ export default function Home() {
     setIsTg(true);
     tg.ready();
     tg.expand();
-
+    try {
+      tg.ready();
+      tg.expand();
+      tg.MainButton.hide();
+    } catch {}
     setUser(tg.initDataUnsafe?.user ?? null);
     setTheme(tg.themeParams ?? {});
 

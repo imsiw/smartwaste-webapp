@@ -26,6 +26,12 @@ export default function HelpPage() {
     const tg: any = (window as any).Telegram?.WebApp;
     if (!tg) return;
 
+    try {
+      tg.ready();
+      tg.expand();
+      tg.MainButton.hide();
+    } catch {}
+
     setIsTg(true);
     tg.ready();
     tg.expand();
