@@ -81,6 +81,12 @@ export default function ReportPage() {
     } catch {}
 
     setStatus("Можно отправлять репорт.");
+
+    return () => {
+      try {
+        tg.MainButtin.hide();
+      } catch {}
+    }
   }, []);
 
   useEffect(() => {
