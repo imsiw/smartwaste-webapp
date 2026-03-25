@@ -16,6 +16,16 @@ export default function Home() {
 
   useEffect(() => {
     const tg: any = (window as any).Telegram?.WebApp;
+    const params = new URLSearchParams(window.location.search);
+    const qId = params.get("tg_id");
+    const qUsername = params.get("tg_username");
+    const qFirstName = params.get("tg_first_name");
+    const qLastName = params.get("tg_last_name");
+
+    if (qId) localStorage.setItem("tg_id", qId);
+    if (qUsername) localStorage.setItem("tg_username", qUsername);
+    if (qFirstName) localStorage.setItem("tg_first_name", qFirstName);
+    if (qLastName) localStorage.setItem("tg_last_name", qLastName);
     if (!tg) return;
 
     setIsTg(true);
@@ -152,9 +162,9 @@ export default function Home() {
 }
 
 function mapRole(role?: AppRole) {
-  if (role === "ADMIN") return "Admin";
-  if (role === "CLEANER") return "Cleaner";
-  return "User";
+  if (role === "ADMIN") return "Админ";
+  if (role === "CLEANER") return "Уборщик";
+  return "Житель";
 }
 
 function looksGreen(hex: string) {
@@ -256,13 +266,37 @@ function Logo({ accent }: { accent: string }) {
 
 function getTelegramHeaders() {
   const tg = (window as any).Telegram?.WebApp;
-  const user = tg?.initDataUnsafe?.user;
+  const params = new URLSearchParams(window.location.search);
+
+  const tgId =
+    params.get("tg_id") ||
+    localStorage.getItem("tg_id") ||
+    String(tg?.initDataUnsafe?.user?.id || "");
+
+  const tgUsername =
+    params.get("tg_username") ||
+    localStorage.getItem("tg_username") ||
+    tg?.initDataUnsafe?.user?.username ||
+    "";
+
+  const tgFirstName =
+    params.get("tg_first_name") ||
+    localStorage.getItem("tg_first_name") ||
+    tg?.initDataUnsafe?.user?.first_name ||
+    "";
+
+  const tgLastName =
+    params.get("tg_last_name") ||
+    localStorage.getItem("tg_last_name") ||
+    tg?.initDataUnsafe?.user?.last_name ||
+    "";
 
   return {
     "Content-Type": "application/json",
-    "x-telegram-id": user?.id ? String(user.id) : "",
-    "x-telegram-username": user?.username || "",
-    "x-telegram-first-name": user?.first_name || "",
-    "x-telegram-last-name": user?.last_name || "",
+    "x-telegram-init-data": tg?.initData || "",
+    "x-telegram-id": String(tgId || ""),
+    "x-telegram-username": tgUsername,
+    "x-telegram-first-name": tgFirstName,
+    "x-telegram-last-name": tgLastName,
   };
 }
