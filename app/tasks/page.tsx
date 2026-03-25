@@ -222,9 +222,9 @@ export default function TasksPage() {
             <Card key={task.id} colors={colors}>
               <img src={task.photoPath} alt="task" style={{ width: "100%", borderRadius: 12, marginBottom: 12 }} />
               <div style={{ fontWeight: 800 }}>{task.comment || "Без комментария"}</div>
-              <div style={{ color: colors.hint, fontSize: 13, marginTop: 6 }}>Статус: {formatTask(task.status)}</div>
-              <div style={{ color: colors.hint, fontSize: 13, marginTop: 6 }}>Автор: {task.createdBy?.firstName || task.createdBy?.username || "пользователь"}</div>
-              <div style={{ color: colors.hint, fontSize: 13, marginTop: 6 }}>Исполнитель: {task.assignedTo?.firstName || task.assignedTo?.username || "не назначен"}</div>
+              <div style={{ color: colors.hint, fontSize: 13, marginTop: 6 }}><strong style={{ color: colors.text }}>Статус:</strong> {formatTask(task.status)}</div>
+              <div style={{ color: colors.hint, fontSize: 13, marginTop: 6 }}><strong style={{ color: colors.text }}>Автор:</strong> {task.createdBy?.firstName || task.createdBy?.username || "пользователь"}</div>
+              <div style={{ color: colors.hint, fontSize: 13, marginTop: 6 }}><strong style={{ color: colors.text }}>Исполнитель:</strong> {task.assignedTo?.firstName || task.assignedTo?.username || "не назначен"}</div>
               <div style={{ marginTop: 8, color: colors.hint, fontSize: 12 }}><strong style={{ color: colors.text }}>Время отправки:</strong>{" "}{formatDateTime(task.createdAt)}</div>
               <div style={{ marginTop: 6, color: colors.hint, fontSize: 12, lineHeight: 1.4 }}><strong style={{ color: colors.text }}>Локация:</strong>{" "}{formatLocation(task)}</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
