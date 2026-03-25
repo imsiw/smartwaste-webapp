@@ -22,6 +22,9 @@ type TaskItem = {
   createdAt: string;
   assignedTo?: { firstName?: string | null; username?: string | null } | null;
   createdBy?: { firstName?: string | null; username?: string | null } | null;
+  lat?: number | null;
+  lon?: number | null;
+  acc?: number | null;
 };
 
 async function safeJson(res: Response) {
@@ -221,6 +224,9 @@ export default function TasksPage() {
               <div style={{ fontWeight: 800 }}>{task.comment || "Без комментария"}</div>
               <div style={{ color: colors.hint, fontSize: 13, marginTop: 6 }}>Статус: {formatTask(task.status)}</div>
               <div style={{ color: colors.hint, fontSize: 13, marginTop: 6 }}>Автор: {task.createdBy?.firstName || task.createdBy?.username || "пользователь"}</div>
+              <div style={{ color: colors.hint, fontSize: 13, marginTop: 6 }}>Исполнитель: {task.assignedTo?.firstName || task.assignedTo?.username || "не назначен"}</div>
+              <div style={{ marginTop: 8, color: colors.hint, fontSize: 12 }}><strong style={{ color: colors.text }}>Время отправки:</strong>{" "}{formatDateTime(task.createdAt)}</div>
+              <div style={{ marginTop: 6, color: colors.hint, fontSize: 12, lineHeight: 1.4 }}><strong style={{ color: colors.text }}>Локация:</strong>{" "}{formatLocation(task)}</div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
                 {task.status !== "IN_PROGRESS" && task.status !== "DONE" && <button onClick={() => taskAction(task.id, "start")} style={smallBtn(colors)}>Взять в работу</button>}
                 {task.status !== "NEW" && task.status !== "DONE" && <button onClick={() => taskAction(task.id, "reset")} style={smallBtn(colors)}>Вернуть в новое</button>}
@@ -325,4 +331,35 @@ function getTelegramHeaders() {
     "x-telegram-first-name": tgFirstName,
     "x-telegram-last-name": tgLastName,
   };
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+
+  return d.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatLocation(task: {
+  lat?: number | null;
+  lon?: number | null;
+  acc?: number | null;
+}) {
+  if (typeof task.lat !== "number" || typeof task.lon !== "number") {
+    return "Не указана";
+  }
+
+  const base = `${task.lat.toFixed(5)}, ${task.lon.toFixed(5)}`;
+  if (typeof task.acc === "number") {
+    return `${base} (±${Math.round(task.acc)} м)`;
+  }
+
+  return base;
 }
